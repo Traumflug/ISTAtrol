@@ -1,0 +1,16 @@
+*~
+*-
+
+*.cmd
+*.net
+*.new.pcb
+*.bak
+*.bak?
+*.cnc
+*.gcode
+*.gbr
+*.png
+*.zip
+
+private/*
+

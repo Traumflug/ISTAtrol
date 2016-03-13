@@ -1,0 +1,229 @@
+v 20140308 2
+P 700 4100 400 4100 1 0 1
+{
+T 750 4150 3 8 1 1 0 1 1
+pinlabel=PA2
+T 650 4200 5 8 1 1 0 7 1
+pinnumber=1
+T 650 4000 5 8 0 0 180 1 1
+pinseq=1
+T 750 4000 3 6 1 1 0 1 1
+pinlabel=\_Reset\_/dW
+}
+T 1700 200 5 10 1 1 0 5 1
+device=ATtiny2313
+P 700 3700 400 3700 1 0 1
+{
+T 750 3750 3 8 1 1 0 1 1
+pinlabel=PD0
+T 650 3800 5 8 1 1 0 7 1
+pinnumber=2
+T 650 3600 5 8 0 0 180 1 1
+pinseq=2
+T 750 3600 3 6 1 1 0 1 1
+pinlabel=RXD
+}
+P 700 3300 400 3300 1 0 1
+{
+T 750 3350 3 8 1 1 0 1 1
+pinlabel=PD1
+T 650 3400 5 8 1 1 0 7 1
+pinnumber=3
+T 650 3200 5 8 0 0 180 1 1
+pinseq=3
+T 750 3200 3 6 1 1 0 1 1
+pinlabel=TXD
+}
+P 700 2900 400 2900 1 0 1
+{
+T 750 2950 3 8 1 1 0 1 1
+pinlabel=PA1
+T 650 3000 5 8 1 1 0 7 1
+pinnumber=4
+T 650 2800 5 8 0 0 180 1 1
+pinseq=4
+T 750 2800 3 6 1 1 0 1 1
+pinlabel=XTAL2
+}
+P 2700 4100 3000 4100 1 0 1
+{
+T 2650 4100 3 8 1 1 0 7 1
+pinlabel=Vcc
+T 2750 4200 5 8 1 1 0 1 1
+pinnumber=20
+T 2750 4000 5 8 0 0 0 1 1
+pinseq=20
+}
+P 2700 2900 3000 2900 1 0 1
+{
+T 2650 2950 3 8 1 1 0 7 1
+pinlabel=PB5
+T 2750 3000 5 8 1 1 0 1 1
+pinnumber=17
+T 2750 2800 5 8 0 0 0 1 1
+pinseq=17
+T 2650 2800 3 6 1 1 0 7 1
+pinlabel=MOSI/DI/SDA/PCINT5
+}
+P 2700 3300 3000 3300 1 0 1
+{
+T 2650 3350 3 8 1 1 0 7 1
+pinlabel=PB6
+T 2750 3400 5 8 1 1 0 1 1
+pinnumber=18
+T 2750 3200 5 8 0 0 0 1 1
+pinseq=18
+T 2650 3200 3 6 1 1 0 7 1
+pinlabel=MISO/DO/PCINT6
+}
+P 2700 3700 3000 3700 1 0 1
+{
+T 2650 3750 3 8 1 1 0 7 1
+pinlabel=PB7
+T 2750 3800 5 8 1 1 0 1 1
+pinnumber=19
+T 2750 3600 5 8 0 0 0 1 1
+pinseq=19
+T 2650 3600 3 6 1 1 0 7 1
+pinlabel=USCK/SCL/PCINT7
+}
+T 1700 4400 8 10 1 1 0 3 1
+refdes=U?
+L 700 4300 700 300 3 0 0 0 -1 -1
+L 700 300 2700 300 3 0 0 0 -1 -1
+L 2700 300 2700 4300 3 0 0 0 -1 -1
+L 2700 4300 700 4300 3 0 0 0 -1 -1
+T 1726 4600 8 10 0 0 0 3 1
+footprint=DIP20
+T 1700 4800 5 10 0 0 0 3 1
+description=ATtiny2313 MCU
+P 700 500 400 500 1 0 1
+{
+T 750 500 3 8 1 1 0 1 1
+pinlabel=GND
+T 650 600 5 8 1 1 0 7 1
+pinnumber=10
+T 650 400 5 8 0 0 180 1 1
+pinseq=10
+}
+P 2700 1300 3000 1300 1 0 1
+{
+T 2650 1350 3 8 1 1 0 7 1
+pinlabel=PB1
+T 2750 1400 5 8 1 1 0 1 1
+pinnumber=13
+T 2750 1200 5 8 0 0 0 1 1
+pinseq=13
+T 2650 1200 3 6 1 1 0 7 1
+pinlabel=AIN1/PCINT1
+}
+P 2700 1700 3000 1700 1 0 1
+{
+T 2650 1750 3 8 1 1 0 7 1
+pinlabel=PB2
+T 2750 1800 5 8 1 1 0 1 1
+pinnumber=14
+T 2750 1600 5 8 0 0 0 1 1
+pinseq=14
+T 2650 1600 3 6 1 1 0 7 1
+pinlabel=OC0A/PCINT2
+}
+P 2700 2100 3000 2100 1 0 1
+{
+T 2650 2150 3 8 1 1 0 7 1
+pinlabel=PB3
+T 2750 2200 5 8 1 1 0 1 1
+pinnumber=15
+T 2750 2000 5 8 0 0 0 1 1
+pinseq=15
+T 2650 2000 3 6 1 1 0 7 1
+pinlabel=OC1A/PCINT3
+}
+P 2700 500 3000 500 1 0 1
+{
+T 2650 550 3 8 1 1 0 7 1
+pinlabel=PD6
+T 2750 600 5 8 1 1 0 1 1
+pinnumber=11
+T 2750 400 5 8 0 0 0 1 1
+pinseq=11
+T 2650 400 3 6 1 1 0 7 1
+pinlabel=ICP
+}
+P 2700 900 3000 900 1 0 1
+{
+T 2650 950 3 8 1 1 0 7 1
+pinlabel=PB0
+T 2750 1000 5 8 1 1 0 1 1
+pinnumber=12
+T 2750 800 5 8 0 0 0 1 1
+pinseq=12
+T 2650 800 3 6 1 1 0 7 1
+pinlabel=AIN0/PCINT0
+}
+P 700 2500 400 2500 1 0 1
+{
+T 750 2550 3 8 1 1 0 1 1
+pinlabel=PA0
+T 650 2600 5 8 1 1 0 7 1
+pinnumber=5
+T 650 2400 5 8 0 0 180 1 1
+pinseq=5
+T 750 2400 3 6 1 1 0 1 1
+pinlabel=XTAL1
+}
+P 700 2100 400 2100 1 0 1
+{
+T 750 2150 3 8 1 1 0 1 1
+pinlabel=PD2
+T 650 2200 5 8 1 1 0 7 1
+pinnumber=6
+T 650 2000 5 8 0 0 180 1 1
+pinseq=6
+T 750 2000 3 6 1 1 0 1 1
+pinlabel=CKOUT/XCK/INT0
+}
+P 700 1700 400 1700 1 0 1
+{
+T 750 1750 3 8 1 1 0 1 1
+pinlabel=PD3
+T 650 1800 5 8 1 1 0 7 1
+pinnumber=7
+T 650 1600 5 8 0 0 180 1 1
+pinseq=7
+T 750 1600 3 6 1 1 0 1 1
+pinlabel=INT1
+}
+P 700 1300 400 1300 1 0 1
+{
+T 750 1350 3 8 1 1 0 1 1
+pinlabel=PD4
+T 650 1400 5 8 1 1 0 7 1
+pinnumber=8
+T 650 1200 5 8 0 0 180 1 1
+pinseq=8
+T 750 1200 3 6 1 1 0 1 1
+pinlabel=T0
+}
+P 700 900 400 900 1 0 1
+{
+T 750 950 3 8 1 1 0 1 1
+pinlabel=PD5
+T 650 1000 5 8 1 1 0 7 1
+pinnumber=9
+T 650 800 5 8 0 0 180 1 1
+pinseq=9
+T 750 800 3 6 1 1 0 1 1
+pinlabel=OC0B/T1
+}
+P 2700 2500 3000 2500 1 0 1
+{
+T 2650 2550 3 8 1 1 0 7 1
+pinlabel=PB4
+T 2750 2600 5 8 1 1 0 1 1
+pinnumber=16
+T 2750 2400 5 8 0 0 0 1 1
+pinseq=16
+T 2650 2400 3 6 1 1 0 7 1
+pinlabel=OC1B/PCINT4
+}

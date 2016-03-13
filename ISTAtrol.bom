@@ -1,0 +1,28 @@
+# PcbBOM Version 1.0
+# Date: So 13 Mär 2016 09:53:04 GMT UTC
+# Author: Markus Hitter
+# Title: (unknown) - PCB BOM
+# Quantity, Description, Value, RefDes
+# --------------------------------------------
+# Sorted manually by component height.
+# --------------------------------------------
+2,"ACY300_1","68R",R3 R4
+1,"ACY300_1","180",R5
+2,"ACY300_1","560R",R13 R12
+2,"ACY300_1","1K",R6 R8
+3,"ACY300_1","2K2",R7 R9 R2
+1,"ACY300_1","4K7",R10
+1,"ACY300_1","10K",R11
+1,"ACY300_1","1M",R1
+1,"D400_1","1N4004",D1
+1,"ACY100_1","0.1_uF",C2
+2,"LED3_1","green",LED2 LED1
+1,"DIP20_1","unknown",U1
+1,"ACY100_1","1_uF",C3
+1,"TO-92_1","LP2950L-33-T92",Q1
+1,"JUMPER3_1","unknown",J1
+1,"ICSP_HEADER","unknown",CONN2
+5,"100-2-1","unknown",MOTOR TEMP_1 TEMP_2 TEMP_3 EXT_VS
+1,"RCY2mm","10_uF",C1
+3,"MJTP1230-1","unknown",MINUS MENU PLUS
+1,"USB_B","USB",CONN1

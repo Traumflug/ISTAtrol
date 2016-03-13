@@ -1,0 +1,55 @@
+
+ISTAtrol heating valve controller.
+
+Designed for DIY-ability.
+
+This controller controls the valve of a heating radiator which is equipped
+with a DC motor running at 3 volts. It comes with three temperature sensors:
+
+  1) To be attached to or near to the ISTA counter.
+
+  2) To be attached to the body of the valve.
+
+  3) To measure room temperature.
+
+User input comes in via USB and/or the included three buttons. Output drives
+the DC motor of the valve. The motor of the first version was extraced from
+a commercial digital valve controller and takes about 15 mA when running.
+Valve motor as well as the MCU are fed by 5 V USB or alternatively by an
+external voltage source (5 to 12 volts).
+
+This controller was designed because these ISTA counters measure heating
+consumption based on the temperature of the radiator, only, which leaves much
+room for optimisation.
+
+For example, they don't count anything when the radiator is below 28 deg
+Celsius, which can be exploited to have some moderate heating for free. The
+controller also controls the temperature of the heating valve, to compensate
+for changing temperatures of the feed line, which usually results in uneven
+room heating and also higher than neccessary consumption measurements.
+
+
+Directory contents:
+
+  firmware/usbdrv:
+
+    This is the V-USB driver stack. Unmodified extracted from the most recent
+    distribution (2012-01-09 as of this writing)
+
+  firmware/libs-device:
+
+    Some helper files coming with V-USB, mostly unchanged.
+
+  firmware/ (other)
+
+    USB configuration, main application and Makefile. The Makefiles work well.
+    "make" to just compile, "make program" to compile and upload the code. The
+    bootloader Makefile has an additional target "make fuses" which sets the
+    fuses correctly. So far, all programming requires an ISP programmer.
+
+  Other files and directories:
+
+    Electronic board design.
+
+
+Markus "Traumflug" Hitter, March 2016
