@@ -4,7 +4,6 @@
  * Tabsize: 4
  * Copyright: (c) 2008 by OBJECTIVE DEVELOPMENT Software GmbH
  * License: GNU GPL v2 (see License.txt), GNU GPL v3 or proprietary (CommercialLicense.txt)
- * This Revision: $Id$
  */
 
 /*
@@ -48,13 +47,8 @@ Thanks to Henrik Haftmann for the idea to this routine!
 #define TIMER0_PRESCALING           64 /* must match the configuration for TIMER0 in main */
 #define TOLERATED_DEVIATION_PPT     5  /* max clock deviation before we tune in 1/10 % */
 /* derived constants: */
-// For unknown reasons, the assembler coming with avr-gcc 4.5.3
-// doesn't support terms ...
-//#define EXPECTED_TIMER0_INCREMENT   ((F_CPU / (1000 * TIMER0_PRESCALING)) & 0xff)
-//#define TOLERATED_DEVIATION         (TOLERATED_DEVIATION_PPT * F_CPU / (1000000 * TIMER0_PRESCALING))
-// ... so, calculate the values by hand:
-#define EXPECTED_TIMER0_INCREMENT   1
-#define TOLERATED_DEVIATION         1
+#define EXPECTED_TIMER0_INCREMENT   ((F_CPU / (1000 * TIMER0_PRESCALING)) & 0xff)
+#define TOLERATED_DEVIATION         (TOLERATED_DEVIATION_PPT * F_CPU / (1000000 * TIMER0_PRESCALING))
 
 #ifdef __ASSEMBLER__
 macro tuneOsccal

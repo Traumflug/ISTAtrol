@@ -47,7 +47,7 @@ enum {
 };
 
 /* USB configuration descriptor */
-static PROGMEM char configDescrCDC[] = {
+static PROGMEM const char configDescrCDC[] = {
   9,          /* sizeof(usbDescrConfig): length of descriptor in bytes */
   USBDESCR_CONFIG,    /* descriptor type */
   67,
@@ -230,7 +230,7 @@ static void hardwareInit(void) {
   PRR = 0xCF;     // disable all peripherals except Timer0
   ACSR |= 0x80;   // disable analog comparator and save 70uA
   TCCR0B = 0x03;  // prescaler 64 (see osctune.h)
-  
+
   /* activate pull-ups except on USB lines */
   USB_CFG_IOPORT = (uchar)~((1 << USB_CFG_DMINUS_BIT) | (1 << USB_CFG_DPLUS_BIT));
 
