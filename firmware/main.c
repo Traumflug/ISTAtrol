@@ -32,8 +32,8 @@
    packages for a given amount of data and as such, fewer overhead. However,
    on my Ubuntu box I get the same speed results for all values of 16 and
    above. On the other side, there's nothing as pointless as unused RAM. */
-#define HW_CDC_BULK_OUT_SIZE     64
-#define HW_CDC_BULK_IN_SIZE      64
+#define HW_CDC_BULK_OUT_SIZE     8
+#define HW_CDC_BULK_IN_SIZE      8
 
 enum {
   SEND_ENCAPSULATED_COMMAND = 0,
@@ -176,14 +176,6 @@ uchar usbFunctionSetup(uchar data[8]) {
     value = rq->wValue.word;
     /* DTR => SPI_SS + 1 */
     if (rq->bRequest == SET_CONTROL_LINE_STATE) {
-#if USB_CFG_HAVE_INTRIN_ENDPOINT3
-      /*
-       * Report serial state (carrier detect). On several Unix platforms,
-       * tty devices can only be opened when carrier detect is set.
-       */
-      if (intr3Status == 0)
-        intr3Status = 2;
-#endif
       SPI_PORT = (SPI_PORT & ~(1 << (SPI_SS + 1))) | ((value & 1) << (SPI_SS + 1));
     }
 
@@ -216,9 +208,6 @@ void usbFunctionWriteOut(uchar *data, uchar len) {
   /* host => here */
   while (len--)
     rx_buf[rxptr++] = *data++;
-
-  /* postpone receiving next data */
-  usbDisableAllRequests();
 }
 
 /* ------------------------------------------------------------------------- */
@@ -260,11 +249,8 @@ int __attribute__((noreturn)) main(void) {
 
     /*  host => here  */
     if (txptr == 0) {
-      if (usbAllRequestsAreDisabled())
-        usbEnableAllRequests();
-
       while (rxptr) {
-#if 1  // normal operations
+#if 0  // normal operations
         USIDR = rx_buf[txptr];
         USISR = (1 << USIOIF);
         do {
@@ -293,22 +279,6 @@ int __attribute__((noreturn)) main(void) {
         txptr = 0;
       }
     }
-
-#if USB_CFG_HAVE_INTRIN_ENDPOINT3
-    /* We need to report rx and tx carrier after open attempt */
-    if (intr3Status != 0 && usbInterruptIsReady3()) {
-      static uchar serialStateNotification[10] =
-                   {0xa1, 0x20, 0, 0, 0, 0, 2, 0, 3, 0};
-
-      if (intr3Status == 2) {
-        usbSetInterrupt3(serialStateNotification, 8);
-      }
-      else {
-        usbSetInterrupt3(serialStateNotification+8, 2);
-      }
-      intr3Status--;
-    }
-#endif
   }
 }
 

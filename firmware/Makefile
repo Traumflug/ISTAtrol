@@ -107,7 +107,9 @@ $(BUILDDIR)/%.lss: $(BUILDDIR)/%.elf
 
 size: $(BUILDDIR)/$(PROJECT).elf
 	@echo
-	avr-size -C --mcu=$(MCU) $(BUILDDIR)/$(PROJECT).elf
+	@avr-size -C --mcu=$(MCU) $(BUILDDIR)/$(PROJECT).elf | grep "Device:"
+	@avr-size -C --mcu=$(MCU) $(BUILDDIR)/$(PROJECT).elf | grep "Program:"
+	@avr-size -C --mcu=$(MCU) $(BUILDDIR)/$(PROJECT).elf | grep "Data:"
 
 ## Fuses
 fuses:

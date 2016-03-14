@@ -79,7 +79,7 @@ section at the end of this file).
  * default control endpoint 0 and an interrupt-in endpoint (any other endpoint
  * number).
  */
-#define USB_CFG_HAVE_INTRIN_ENDPOINT3   1
+#define USB_CFG_HAVE_INTRIN_ENDPOINT3   0
 /* Define this to 1 if you want to compile a version with three endpoints: The
  * default control endpoint 0, an interrupt-in endpoint 3 (or the number
  * configured below) and a catch-all default interrupt-in endpoint as above.
@@ -114,33 +114,33 @@ section at the end of this file).
  * interval. The value is in milliseconds and must not be less than 10 ms for
  * low speed devices.
  */
-#define USB_CFG_IS_SELF_POWERED         1
+#define USB_CFG_IS_SELF_POWERED         0
 /* Define this to 1 if the device has its own power supply. Set it to 0 if the
  * device is powered from the USB bus.
  */
-#define USB_CFG_MAX_BUS_POWER           0
+#define USB_CFG_MAX_BUS_POWER         100
 /* Set this variable to the maximum USB bus power consumption of your device.
  * The value is in milliamperes. [It will be divided by two since USB
  * communicates power requirements in units of 2 mA.]
  */
-#define USB_CFG_IMPLEMENT_FN_WRITE      1
+#define USB_CFG_IMPLEMENT_FN_WRITE      0
 /* Set this to 1 if you want usbFunctionWrite() to be called for control-out
  * transfers. Set it to 0 if you don't need it and want to save a couple of
  * bytes.
  */
-#define USB_CFG_IMPLEMENT_FN_READ       1
+#define USB_CFG_IMPLEMENT_FN_READ       0
 /* Set this to 1 if you need to send control replies which are generated
  * "on the fly" when usbFunctionRead() is called. If you only want to send
  * data from a static buffer, set it to 0 and return the data from
  * usbFunctionSetup(). This saves a couple of bytes.
  */
-#define USB_CFG_IMPLEMENT_FN_WRITEOUT   1
+#define USB_CFG_IMPLEMENT_FN_WRITEOUT   0
 /* Define this to 1 if you want to use interrupt-out (or bulk out) endpoints.
  * You must implement the function usbFunctionWriteOut() which receives all
  * interrupt/bulk data sent to any endpoint other than 0. The endpoint number
  * can be found in 'usbRxToken'.
  */
-#define USB_CFG_HAVE_FLOWCONTROL        1
+#define USB_CFG_HAVE_FLOWCONTROL        0
 /* Define this to 1 if you want flowcontrol over USB data. See the definition
  * of the macros usbDisableAllRequests() and usbEnableAllRequests() in
  * usbdrv.h.
@@ -249,8 +249,8 @@ extern void calibrateOscillator(void);
 #define USB_CFG_DEVICE_VERSION  0x00, 0x01
 /* Version number of the device: Minor number first, then major number.
  */
-#define USB_CFG_VENDOR_NAME     'r', 'e', 'p', 'r', 'a', 'p', '-', 'd', 'i', 'y', '.', 'c', 'o', 'm'
-#define USB_CFG_VENDOR_NAME_LEN 14
+#define USB_CFG_VENDOR_NAME     'R', 'e', 'p', 'R', 'a', 'p', ' ', 'D', 'I', 'Y'
+#define USB_CFG_VENDOR_NAME_LEN 10
 /* These two values define the vendor name returned by the USB device. The name
  * must be given as a list of characters under single quotes. The characters
  * are interpreted as Unicode (UTF-16) entities.
@@ -259,8 +259,8 @@ extern void calibrateOscillator(void);
  * obdev's free shared VID/PID pair. See the file USB-IDs-for-free.txt for
  * details.
  */
-#define USB_CFG_DEVICE_NAME     'G', 'e', 'n', 'e', 'r', 'a', 't', 'i', 'o', 'n', ' ', '7', ' ', 'E', 'l', 'e', 'c', 't', 'r', 'o', 'n', 'i', 'c', 's'
-#define USB_CFG_DEVICE_NAME_LEN 24
+#define USB_CFG_DEVICE_NAME     'I', 'S', 'T', 'A', 't', 'r', 'o', 'l'
+#define USB_CFG_DEVICE_NAME_LEN 8
 /* Same as above for the device name. If you don't want a device name, undefine
  * the macros. See the file USB-IDs-for-free.txt before you assign a name if
  * you use a shared VID/PID.
