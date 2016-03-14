@@ -389,10 +389,4 @@ extern void calibrateOscillator(void);
 /* #define USB_INTR_PENDING_BIT    INTF0 */
 /* #define USB_INTR_VECTOR         INT0_vect */
 
-#define USB_INTR_CFG            PCMSK
-#define USB_INTR_CFG_SET        (1<<USB_CFG_DMINUS_BIT)
-#define USB_INTR_ENABLE_BIT     PCIE
-#define USB_INTR_PENDING_BIT    PCIF
-#define USB_INTR_VECTOR         SIG_PIN_CHANGE
-
 #endif /* __usbconfig_h_included__ */

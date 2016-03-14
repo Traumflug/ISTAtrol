@@ -7,7 +7,7 @@ PROJECT = firmware
 
 MCU = attiny2313
 
-F_CPU = 12800000UL
+F_CPU = 12800000
 
 BUILDDIR = build
 
@@ -20,22 +20,33 @@ TARGET = $(PROJECT).hex
 CC = avr-gcc
 
 ## Options common to compile, link and assembly rules.
-COMMON = -mmcu=$(MCU)
+COMMON = -mmcu=$(MCU) -save-temps=obj
 
 ## Compile options common for all C compilation units.
-CFLAGS = $(COMMON) -DFIRMWARE
-CFLAGS += -Wall -gdwarf-2 -DF_CPU=$(F_CPU) -Os -fsigned-char
+CFLAGS = $(COMMON)
+CFLAGS += -DF_CPU=$(F_CPU)
+CFLAGS += -Wall
+CFLAGS += -Wstrict-prototypes
+CFLAGS += -Winline
+CFLAGS += -std=gnu99
+CFLAGS += -Os
+CFLAGS += -funsigned-char
+CFLAGS += -funsigned-bitfields
+CFLAGS += -fpack-struct
+CFLAGS += -fshort-enums
 CFLAGS += -fno-move-loop-invariants
 CFLAGS += -fno-tree-scev-cprop
+CFLAGS += -ffunction-sections
+CFLAGS += -finline-functions-called-once
 
 ## Assembly specific flags.
-ASMFLAGS = $(COMMON)
-ASMFLAGS += $(CFLAGS)
+ASMFLAGS = $(CFLAGS)
 ASMFLAGS += -x assembler-with-cpp -Wa,-gdwarf2
 
 ## Linker flags.
 LDFLAGS = $(COMMON)
-LDFLAGS +=
+LDFLAGS += -Wl,--as-needed
+LDFLAGS += -Wl,--gc-sections
 
 ## Intel Hex file production flags.
 HEX_FLASH_FLAGS = -R .eeprom -R .fuse -R .lock -R .signature

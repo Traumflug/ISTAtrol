@@ -151,11 +151,11 @@ static uchar intr3Status; /* used to control interrupt endpoint transmissions */
 
 uchar usbFunctionDescriptor(usbRequest_t *rq) {
   if (rq->wValue.bytes[1] == USBDESCR_DEVICE) {
-    usbMsgPtr = (uchar *)usbDescriptorDevice;
+    usbMsgPtr = (usbMsgPtr_t)usbDescriptorDevice;
     return usbDescriptorDevice[0];
   }
   else {  /* must be config descriptor */
-    usbMsgPtr = (uchar *)configDescrCDC;
+    usbMsgPtr = (usbMsgPtr_t)configDescrCDC;
     return sizeof(configDescrCDC);
   }
 }
@@ -227,7 +227,7 @@ void usbFunctionWriteOut(uchar *data, uchar len) {
 
 static void hardwareInit(void) {
   wdt_disable();
-  PRR = 0xCF;     // disable all peripherals except Timer0
+
   ACSR |= 0x80;   // disable analog comparator and save 70uA
   TCCR0B = 0x03;  // prescaler 64 (see osctune.h)
 
