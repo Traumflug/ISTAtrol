@@ -19,202 +19,46 @@
 
 #include "usbdrv.h"
 
-// ATtiny45/85
-#define SPI_DDR     DDRB
-#define SPI_PORT    PORTB
-#define SPI_PIN     PINB
-#define SPI_DI      0
-#define SPI_DO      1
-#define SPI_SCL     2
-#define SPI_SS      5        // b5:Break
 
-/* This influences bulk data transfer speed, as bigger packages mean fewer
-   packages for a given amount of data and as such, fewer overhead. However,
-   on my Ubuntu box I get the same speed results for all values of 16 and
-   above. On the other side, there's nothing as pointless as unused RAM. */
-#define HW_CDC_BULK_OUT_SIZE     8
-#define HW_CDC_BULK_IN_SIZE      8
+#define VENDOR_RQ_WRITE_BUFFER  1
+#define VENDOR_RQ_READ_BUFFER   2
 
-enum {
-  SEND_ENCAPSULATED_COMMAND = 0,
-  GET_ENCAPSULATED_RESPONSE,
-  SET_COMM_FEATURE,
-  GET_COMM_FEATURE,
-  CLEAR_COMM_FEATURE,
-  SET_LINE_CODING = 0x20,
-  GET_LINE_CODING,
-  SET_CONTROL_LINE_STATE,
-};
 
-/* USB configuration descriptor */
-static PROGMEM const char configDescrCDC[] = {
-  9,          /* sizeof(usbDescrConfig): length of descriptor in bytes */
-  USBDESCR_CONFIG,    /* descriptor type */
-  67,
-  0,          /* total length of data returned (including inlined descriptors) */
-  2,          /* number of interfaces in this configuration */
-  1,          /* index of this configuration */
-  0,          /* configuration name string index */
-#if USB_CFG_IS_SELF_POWERED
-  (1 << 7) | USBATTR_SELFPOWER,       /* attributes */
-#else
-  (1 << 7),                           /* attributes */
-#endif
-  USB_CFG_MAX_BUS_POWER/2,            /* max USB current in 2mA units */
+uint8_t lastTimer0Value; // See osctune.h.
 
-  /* interface descriptor follows inline: */
-  9,          /* sizeof(usbDescrInterface): length of descriptor in bytes */
-  USBDESCR_INTERFACE, /* descriptor type */
-  0,          /* index of this interface */
-  0,          /* alternate setting for this interface */
-  USB_CFG_HAVE_INTRIN_ENDPOINT,   /* endpoints excl 0: number of endpoint descriptors to follow */
-  USB_CFG_INTERFACE_CLASS,
-  USB_CFG_INTERFACE_SUBCLASS,
-  USB_CFG_INTERFACE_PROTOCOL,
-  0,          /* string index for interface */
+/* ---- USB related functions --------------------------------------------- */
 
-  /* CDC Class-Specific descriptor */
-  5,           /* sizeof(usbDescrCDC_HeaderFn): length of descriptor in bytes */
-  0x24,        /* descriptor type */
-  0,           /* header functional descriptor */
-  0x10, 0x01,
+usbMsgLen_t usbFunctionSetup(uchar data[8]) {
+  //usbRequest_t *rq = (void *)setupData;   // cast to structured data for parsing
 
-  4,           /* sizeof(usbDescrCDC_AcmFn): length of descriptor in bytes */
-  0x24,        /* descriptor type */
-  2,           /* abstract control management functional descriptor */
-  0x02,        /* SET_LINE_CODING,GET_LINE_CODING,SET_CONTROL_LINE_STATE */
+  //switch(rq->bRequest) {
+  //  case VENDOR_RQ_WRITE_BUFFER:
+  //    return USB_NO_MSG;        // tell driver to use usbFunctionWrite()
 
-  5,           /* sizeof(usbDescrCDC_UnionFn): length of descriptor in bytes */
-  0x24,        /* descriptor type */
-  6,           /* union functional descriptor */
-  0,           /* CDC_COMM_INTF_ID */
-  1,           /* CDC_DATA_INTF_ID */
+  //  case VENDOR_RQ_READ_BUFFER:
+  //    return 7;
+  //}
 
-  5,           /* sizeof(usbDescrCDC_CallMgtFn): length of descriptor in bytes */
-  0x24,        /* descriptor type */
-  1,           /* call management functional descriptor */
-  3,           /* allow management on data interface, handles call management by itself */
-  1,           /* CDC_DATA_INTF_ID */
-
-  /* Endpoint Descriptor */
-  7,           /* sizeof(usbDescrEndpoint) */
-  USBDESCR_ENDPOINT,  /* descriptor type = endpoint */
-  0x80|USB_CFG_EP3_NUMBER,        /* IN endpoint number 3 */
-  0x03,        /* attrib: Interrupt endpoint */
-  8, 0,        /* maximum packet size */
-  USB_CFG_INTR_POLL_INTERVAL,        /* in ms */
-
-  /* Interface Descriptor  */
-  9,           /* sizeof(usbDescrInterface): length of descriptor in bytes */
-  USBDESCR_INTERFACE,           /* descriptor type */
-  1,           /* index of this interface */
-  0,           /* alternate setting for this interface */
-  2,           /* endpoints excl 0: number of endpoint descriptors to follow */
-  0x0A,        /* Data Interface Class Codes */
-  0,
-  0,           /* Data Interface Class Protocol Codes */
-  0,           /* string index for interface */
-
-  /* Endpoint Descriptor */
-  7,           /* sizeof(usbDescrEndpoint) */
-  USBDESCR_ENDPOINT,  /* descriptor type = endpoint */
-  0x01,        /* OUT endpoint number 1 */
-  0x02,        /* attrib: Bulk endpoint */
-  HW_CDC_BULK_OUT_SIZE, 0,        /* maximum packet size */
-  0,           /* in ms */
-
-  /* Endpoint Descriptor */
-  7,           /* sizeof(usbDescrEndpoint) */
-  USBDESCR_ENDPOINT,  /* descriptor type = endpoint */
-  0x81,        /* IN endpoint number 1 */
-  0x02,        /* attrib: Bulk endpoint */
-  HW_CDC_BULK_IN_SIZE, 0,        /* maximum packet size */
-  0,           /* in ms */
-};
-
-typedef struct cdcLineCoding {
-  uint32_t  baud;
-  uint8_t   stopBits;
-  uint8_t   parity;
-  uint8_t   numBits;
-} cdcLineCoding_t;
-
-/* ------------------------------------------------------------------------- */
-/* ----------------------------- USB interface ----------------------------- */
-/* ------------------------------------------------------------------------- */
-
-uchar lastTimer0Value; // see osctune.h
-/* unused, but several implementations agree this should be stored */
-static cdcLineCoding_t lineCoding = {115200, 0, 0, 8};
-static uchar sendEmptyFrame;
-static uchar intr3Status; /* used to control interrupt endpoint transmissions */
-
-uchar usbFunctionDescriptor(usbRequest_t *rq) {
-  if (rq->wValue.bytes[1] == USBDESCR_DEVICE) {
-    usbMsgPtr = (usbMsgPtr_t)usbDescriptorDevice;
-    return usbDescriptorDevice[0];
-  }
-  else {  /* must be config descriptor */
-    usbMsgPtr = (usbMsgPtr_t)configDescrCDC;
-    return sizeof(configDescrCDC);
-  }
+  return 0;                               // ignore all unknown requests
 }
-
-uchar usbFunctionSetup(uchar data[8]) {
-  usbRequest_t *rq = (void *)data;
-
-  /* class request type */
-  if ((rq->bmRequestType & USBRQ_TYPE_MASK) == USBRQ_TYPE_CLASS) {
-    uchar value;
-
-    if (rq->bRequest == GET_LINE_CODING || rq->bRequest == SET_LINE_CODING ) {
-      return 0xff;
-      /* GET_LINE_CODING -> usbFunctionRead()  */
-      /* SET_LINE_CODING -> usbFunctionWrite() */
-    }
-
-    value = rq->wValue.word;
-    /* DTR => SPI_SS + 1 */
-    if (rq->bRequest == SET_CONTROL_LINE_STATE) {
-      SPI_PORT = (SPI_PORT & ~(1 << (SPI_SS + 1))) | ((value & 1) << (SPI_SS + 1));
-    }
-
-    /*  Prepare bulk-in endpoint to respond to early termination   */
-    if ((rq->bmRequestType & USBRQ_DIR_MASK) == USBRQ_DIR_HOST_TO_DEVICE)
-      sendEmptyFrame  = 1;
-  }
-
-  return 0;
-}
-
-/* send/receive buffers */
-static uchar tx_buf[HW_CDC_BULK_IN_SIZE];
-static uchar rx_buf[HW_CDC_BULK_OUT_SIZE];
-static uchar txptr = 0, rxptr = 0;
 
 uchar usbFunctionRead(uchar *data, uchar len) {
-  /* request type GET_LINE_CODING */
-  memcpy(data, &lineCoding, sizeof(lineCoding));
   return 7;
 }
 
 uchar usbFunctionWrite (uchar *data, uchar len) {
-  /* request type SET_LINE_CODING */
-  memcpy(&lineCoding, data, sizeof(lineCoding));
   return 1;
 }
 
-void usbFunctionWriteOut(uchar *data, uchar len) {
-  /* host => here */
-  while (len--)
-    rx_buf[rxptr++] = *data++;
-}
 
-/* ------------------------------------------------------------------------- */
-/* ----------------------------- Application ------------------------------- */
-/* ------------------------------------------------------------------------- */
+/* ---- Application ------------------------------------------------------- */
 
 static void hardwareInit(void) {
+
+  /**
+    Even if you don't use the watchdog, turn it off here. On newer devices,
+    the status of the watchdog (on/off, period) is PRESERVED OVER RESET!
+  */
   wdt_disable();
 
   ACSR |= 0x80;   // disable analog comparator and save 70uA
@@ -228,57 +72,14 @@ static void hardwareInit(void) {
   usbDeviceConnect();
 }
 
-int __attribute__((noreturn)) main(void) {
+int main(void) {
+
   hardwareInit();
   usbInit();
-
-  /* set DO, SCL, /SS0, and /SS1 as output  */
-  SPI_DDR  |= (1 << SPI_DO) | (1 << SPI_SCL) | (3 << SPI_SS);
-  SPI_PORT &= (uchar)~((1 << SPI_DO) | (1 << SPI_SCL));
-  SPI_PORT |= (1 << SPI_DI) | (1 << SPI_SS);
-
-  /* SPI mode */
-  USICR = (1 << USIWM0) | (1 << USICS1) | (1 << USICLK);
-
-  intr3Status = 0;
-  sendEmptyFrame  = 0;
-
   sei();
+
   for (;;) {    /* main event loop */
     usbPoll();
-
-    /*  host => here  */
-    if (txptr == 0) {
-      while (rxptr) {
-#if 0  // normal operations
-        USIDR = rx_buf[txptr];
-        USISR = (1 << USIOIF);
-        do {
-          // clk=250kHz
-          _delay_us(1.7);
-          USICR |= (1 << USITC);
-        } while ( ! (USISR & (1 << USIOIF)));
-        tx_buf[txptr++] = USIDR;
-        rxptr--;
-#else  // echo back for USB debugging
-        tx_buf[txptr] = rx_buf[txptr];
-        txptr++; rxptr--;
-#endif
-      }
-    }
-
-    /* here => host */
-    if (usbInterruptIsReady()) {
-      /* fill in additional data to be sent here */
-      // while (txptr < HW_CDC_BULK_IN_SIZE)
-      //   tx_buf[txptr++] = 'a';
-
-      if (txptr | sendEmptyFrame) {
-        usbSetInterrupt(tx_buf, txptr);
-        sendEmptyFrame = txptr & HW_CDC_BULK_IN_SIZE;
-        txptr = 0;
-      }
-    }
   }
 }
 
