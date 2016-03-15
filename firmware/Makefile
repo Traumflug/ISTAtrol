@@ -38,6 +38,8 @@ CFLAGS += -fno-move-loop-invariants
 CFLAGS += -fno-tree-scev-cprop
 CFLAGS += -ffunction-sections
 CFLAGS += -finline-functions-called-once
+CFLAGS += -fverbose-asm
+CFLAGS += -Wa,-adhlns=$(@:.o=.al)
 
 ## Assembly specific flags.
 ASMFLAGS = $(CFLAGS)
@@ -47,6 +49,7 @@ ASMFLAGS += -x assembler-with-cpp -Wa,-gdwarf2
 LDFLAGS = $(COMMON)
 LDFLAGS += -Wl,--as-needed
 LDFLAGS += -Wl,--gc-sections
+LDFLAGS += -Wl,-Map,$(@:.elf=.map)
 
 ## Intel Hex file production flags.
 HEX_FLASH_FLAGS = -R .eeprom -R .fuse -R .lock -R .signature
@@ -59,7 +62,7 @@ HEX_EEPROM_FLAGS += --change-section-lma .eeprom=0 --no-change-warnings
 INCLUDES = -I. -I"usbdrv" -I"libs-device"
 
 ## Objects that must be built in order to link.
-OBJECTS = main.o usbdrv.o usbdrvasm.o osccal.o
+OBJECTS = main.o usbdrv.o usbdrvasm.o
 BUILDOBJECTS = $(addprefix $(BUILDDIR)/,$(OBJECTS))
 
 ## Objects explicitly added by the user.
@@ -86,9 +89,6 @@ $(BUILDDIR)/usbdrvasm.o: usbdrv/usbdrvasm.S usbdrv/usbdrv.h usbconfig.h
 	$(CC) $(INCLUDES) $(ASMFLAGS) -c  $< -o $@
 
 $(BUILDDIR)/usbdrv.o: usbdrv/usbdrv.c usbdrv/usbdrv.h usbconfig.h
-	$(CC) $(INCLUDES) $(CFLAGS) -c  $< -o $@
-
-$(BUILDDIR)/osccal.o: libs-device/osccal.c
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $< -o $@
 
 ## Link

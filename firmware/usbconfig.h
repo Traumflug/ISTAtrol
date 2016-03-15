@@ -10,6 +10,9 @@
 #ifndef __usbconfig_h_included__
 #define __usbconfig_h_included__
 
+#include "osctune.h"
+/* Use continuous clock calibration by including this header.
+ */
 /*
 General Description:
 This file is an example configuration (with inline documentation) for the USB
@@ -176,14 +179,6 @@ section at the end of this file).
  * counts SOF packets. This feature requires that the hardware interrupt is
  * connected to D- instead of D+.
  */
-#ifndef __ASSEMBLER__
-#include <avr/interrupt.h>  // for sei()
-extern void calibrateOscillator(void);
-#endif
-#define USB_RESET_HOOK(resetStarts)  if(!resetStarts){cli(); calibrateOscillator(); sei();}
-#ifndef BOOTLOADER
-#include "libs-device/osctune.h"
-#endif
 /* #ifdef __ASSEMBLER__
  * macro myAssemblerMacro
  *     in      YL, TCNT0

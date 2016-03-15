@@ -24,6 +24,11 @@
 #define VENDOR_RQ_READ_BUFFER   2
 
 
+/**
+  Using continuous calibration is much smaller (36 bytes, in osctune.h, vs.
+  194 bytes for reset-time calibration, osccal.c) and ensures working USB for
+  elongated periods, but also occupies 8-bit Timer0.
+*/
 uint8_t lastTimer0Value; // See osctune.h.
 
 /* ---- USB related functions --------------------------------------------- */
