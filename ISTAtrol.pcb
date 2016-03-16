@@ -863,7 +863,7 @@ Element["" "100-2-1" "MOTOR" "unknown" 4300.00mil 2625.00mil 25.00mil -50.00mil 
 
 	)
 
-Element["" "ACY300_1" "R6" "1K" 3850.00mil 2550.00mil -50.00mil -30.00mil 0 100 ""]
+Element["" "ACY300_1" "R6" "2K2" 3850.00mil 2550.00mil -50.00mil -30.00mil 0 100 ""]
 (
 	Pin[150.00mil 0.0000 60.00mil 20.00mil 65.00mil 30.00mil "1" "1" "edge2"]
 	Pin[-150.00mil 0.0000 60.00mil 20.00mil 65.00mil 30.00mil "2" "2" "edge2"]
@@ -876,7 +876,7 @@ Element["" "ACY300_1" "R6" "1K" 3850.00mil 2550.00mil -50.00mil -30.00mil 0 100 
 
 	)
 
-Element["" "ACY300_1" "R7" "2K2" 3850.00mil 2450.00mil -50.00mil -30.00mil 0 100 ""]
+Element["" "ACY300_1" "R7" "1K" 3850.00mil 2450.00mil -50.00mil -30.00mil 0 100 ""]
 (
 	Pin[-150.00mil 0.0000 60.00mil 20.00mil 65.00mil 30.00mil "1" "1" "edge2"]
 	Pin[150.00mil 0.0000 60.00mil 20.00mil 65.00mil 30.00mil "2" "2" "edge2"]
@@ -1000,7 +1000,7 @@ Element["" "100-2-1" "TEMP_3" "unknown" 3425.00mil 2525.00mil -50.00mil -25.00mi
 
 	)
 
-Element["" "ACY300_1" "R8" "1K" 4500.00mil 2375.00mil -30.00mil 50.00mil 1 100 ""]
+Element["" "ACY300_1" "R8" "2K2" 4500.00mil 2375.00mil -30.00mil 50.00mil 1 100 ""]
 (
 	Pin[0.0000 -150.00mil 60.00mil 20.00mil 65.00mil 30.00mil "1" "1" ""]
 	Pin[0.0000 150.00mil 60.00mil 20.00mil 65.00mil 30.00mil "2" "2" ""]
@@ -1013,7 +1013,7 @@ Element["" "ACY300_1" "R8" "1K" 4500.00mil 2375.00mil -30.00mil 50.00mil 1 100 "
 
 	)
 
-Element["" "ACY300_1" "R9" "2K2" 4400.00mil 2375.00mil -30.00mil 50.00mil 1 100 ""]
+Element["" "ACY300_1" "R9" "1K" 4400.00mil 2375.00mil -30.00mil 50.00mil 1 100 ""]
 (
 	Pin[0.0000 150.00mil 60.00mil 20.00mil 65.00mil 30.00mil "1" "1" ""]
 	Pin[0.0000 -150.00mil 60.00mil 20.00mil 65.00mil 30.00mil "2" "2" ""]
