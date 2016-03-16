@@ -28,31 +28,53 @@
 */
 uint8_t lastTimer0Value; // See osctune.h.
 
+/**
+  We don't need to store much status because we don't implement multiple chunks
+  in read/write transfers.
+*/
+static uint8_t replyBuffer[8];
+
+
 /* ---- USB related functions --------------------------------------------- */
 
-#define VENDOR_RQ_WRITE_BUFFER  1
-#define VENDOR_RQ_READ_BUFFER   2
+/**
+  We use control transfers to exchange data, up to 7 bytes at a time. As we
+  don't have to comply with any standards, we can use all fields freely,
+  except bmRequestType. This is probably the smallest possible implementation,
+  as we don't need to implement regular read or write requests.
 
+  These fields match the ones on terminal.py, for limitations see there.
+
+    typedef struct usbRequest {
+      uchar       bmRequestType;
+      uchar       bRequest;
+      usbWord_t   wValue;
+      usbWord_t   wIndex;
+      usbWord_t   wLength;
+    } usbRequest_t;
+*/
 usbMsgLen_t usbFunctionSetup(uchar data[8]) {
-  //usbRequest_t *rq = (void *)setupData;   // cast to structured data for parsing
+  uint8_t len = 0;
+  // Cast to structured data for parsing.
+  usbRequest_t *rq = (void *)data;
 
-  //switch(rq->bRequest) {
-  //  case VENDOR_RQ_WRITE_BUFFER:
-  //    return USB_NO_MSG;        // tell driver to use usbFunctionWrite()
+  if (rq->bRequest == 'h') {
+    replyBuffer[0] = 'H';
+    replyBuffer[1] = 'e';
+    replyBuffer[2] = 'l';
+    replyBuffer[3] = 'l';
+    replyBuffer[4] = 'o';
+    len = 5;
+  } else {
+    replyBuffer[0] = 'H';
+    replyBuffer[1] = 'u';
+    replyBuffer[2] = 'h';
+    replyBuffer[3] = '?';
+    len = 4;
+  }
 
-  //  case VENDOR_RQ_READ_BUFFER:
-  //    return 7;
-  //}
-
-  return 0;                               // ignore all unknown requests
-}
-
-uchar usbFunctionRead(uchar *data, uchar len) {
-  return 7;
-}
-
-uchar usbFunctionWrite (uchar *data, uchar len) {
-  return 1;
+  usbMsgPtr = replyBuffer;
+  return len;
 }
 
 
@@ -70,6 +92,7 @@ static void hardwareInit(void) {
   TCCR0B = 0x03;
 
   SET_OUTPUT(LED_Y);
+  WRITE(LED_Y, 0);
 
   usbDeviceDisconnect();
   _delay_ms(300);
@@ -85,9 +108,9 @@ int main(void) {
   for (;;) {    /* main event loop */
     usbPoll();
     WRITE(LED_Y, 1);
-    _delay_ms(300);
+    _delay_ms(40);
     WRITE(LED_Y, 0);
-    _delay_ms(300);
+    _delay_ms(40);
   }
 }
 
