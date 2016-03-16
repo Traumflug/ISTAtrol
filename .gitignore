@@ -12,5 +12,5 @@
 *.png
 *.zip
 
-private/*
-
+build/
+firmware.hex
