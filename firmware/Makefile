@@ -82,6 +82,8 @@ program: $(PROJECT).hex
 .SUFFIXES: .c .S .o
 $(shell mkdir -p $(BUILDDIR))
 
+$(BUILDDIR)/*.o: Makefile
+
 $(BUILDDIR)/main.o: main.c usbdrv/usbdrv.h
 	$(CC) $(INCLUDES) $(CFLAGS) -c  $< -o $@
 
@@ -112,8 +114,10 @@ size: $(BUILDDIR)/$(PROJECT).elf
 	@avr-size -C --mcu=$(MCU) $(BUILDDIR)/$(PROJECT).elf | grep "Data:"
 
 ## Fuses
+.PHONY: fuses
 fuses:
-	@echo "To Be Defined" $(AVRDUDE) $(AVRDUDEFLAGSFAST)
+	avrdude -c avrispv2 -p ${MCU} -P /dev/ttyACM0 -B 10 \
+    -U lfuse:w:0xE4:m -U hfuse:w:0xDB:m -U efuse:w:0xFF:m
 
 ## Clean target.
 .PHONY: clean

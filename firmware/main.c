@@ -18,10 +18,7 @@
 #include <util/delay.h>
 
 #include "usbdrv.h"
-
-
-#define VENDOR_RQ_WRITE_BUFFER  1
-#define VENDOR_RQ_READ_BUFFER   2
+#include "pinio.h"
 
 
 /**
@@ -32,6 +29,9 @@
 uint8_t lastTimer0Value; // See osctune.h.
 
 /* ---- USB related functions --------------------------------------------- */
+
+#define VENDOR_RQ_WRITE_BUFFER  1
+#define VENDOR_RQ_READ_BUFFER   2
 
 usbMsgLen_t usbFunctionSetup(uchar data[8]) {
   //usbRequest_t *rq = (void *)setupData;   // cast to structured data for parsing
@@ -66,11 +66,10 @@ static void hardwareInit(void) {
   */
   wdt_disable();
 
-  ACSR |= 0x80;   // disable analog comparator and save 70uA
-  TCCR0B = 0x03;  // prescaler 64 (see osctune.h)
+  // Set time 0 prescaler to 64 (see osctune.h).
+  TCCR0B = 0x03;
 
-  /* activate pull-ups except on USB lines */
-  USB_CFG_IOPORT = (uchar)~((1 << USB_CFG_DMINUS_BIT) | (1 << USB_CFG_DPLUS_BIT));
+  SET_OUTPUT(LED_Y);
 
   usbDeviceDisconnect();
   _delay_ms(300);
@@ -85,6 +84,10 @@ int main(void) {
 
   for (;;) {    /* main event loop */
     usbPoll();
+    WRITE(LED_Y, 1);
+    _delay_ms(300);
+    WRITE(LED_Y, 0);
+    _delay_ms(300);
   }
 }
 
