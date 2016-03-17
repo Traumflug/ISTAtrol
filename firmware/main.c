@@ -109,6 +109,9 @@ static void temp_init(void) {
   */
   ACSR = (1 << ACIE) | (1 << ACIS0) | (1 << ACIS1);
 
+  // Start Timer 1 with prescaling f/8.
+  TCCR1B = (1 << CS11);
+
   SET_OUTPUT(TEMP_C);
   WRITE(TEMP_C, 0);
 }
@@ -137,9 +140,6 @@ static void temp_measure(void) {
   // Clear Timer 1. Write the high byte first to make it an atomic write.
   TCNT1H = 0;
   TCNT1L = 0;
-
-  // Start Timer 1 with prescaling f/8.
-  TCCR1B = (1 << CS11);
 
   // Start loading the capacitor and as such, ADC.
   conversion_done = 0;
@@ -170,10 +170,6 @@ ISR(ANA_COMP_vect) {
     // interrupt time, interrupts are already locked, so no special care
     // required.
     temp_c = TCNT1;
-
-    // Stop Timer 0
-    TCCR1B = 0;
-
     conversion_done = 1;
 
     // Start discharging.
