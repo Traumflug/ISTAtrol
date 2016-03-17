@@ -78,14 +78,15 @@ usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 }
 
 /**
-  Poll USB for at least a second while doing nothing else. This is needed for
-  delays longer than 40 ms. If there's something to do on the USB bus, the
-  delay can be considerably longer.
+  Poll USB while doing nothing for sufficient time to allow the ADC capacitor
+  to discharge. If there's something to do on the USB bus, the delay can be
+  considerably longer.
 */
 static void poll_a_second(void) {
   uint8_t i;
 
-  for (i = 0; i < 25; i++) {
+  // Count to at least 5, else binary size grows significantly (50 bytes).
+  for (i = 0; i < 5; i++) {
     usbPoll();
     _delay_ms(40);
   }
@@ -103,10 +104,10 @@ static void temp_init(void) {
     connected to AIN0 (pin 12, PB0) or to an internal voltage reference.
     For now we use the external one, as our board provides such a thing.
 
-    Analog Comparator interrupt is enabled all the time, but the whole
-    comparator is enabled only on demand.
+    Analog Comparator and its interrupt is enabled all the time, we protect
+    against taking unwanted triggers into account in the interrupt routine.
   */
-  ACSR = (1 << ACD) | (1 << ACIE) | (1 << ACIS0) | (1 << ACIS1);
+  ACSR = (1 << ACIE) | (1 << ACIS0) | (1 << ACIS1);
 
   SET_OUTPUT(TEMP_C);
   WRITE(TEMP_C, 0);
@@ -114,6 +115,22 @@ static void temp_init(void) {
 
 /**
   Measure temperature sensor C.
+
+  Measuring temperature works by loading a capacitor with the thermistor in
+  series while running a timer at the same time. The higher the resistance of
+  thermistor, the slower the capacitor loads, the higher the counter counts.
+  If the cap is sufficiently full, Analog Comparator triggers an interrupt to
+  catch the counter value, measurement done.
+
+  Currently we have a voltage divider on board, delivering 1.08 volts to AIN0.
+  Capacitor is 1 uF. With the thermistor at 30 kOhms, we get values of
+  around 13500, so 14 significant bits. Such resolution is plenty, even with
+  an ordinary resistor replacing the thermistor we still measure jitter of
+  about 100 digits. Higher temperatures give lower numbers.
+
+  A measurement with these 30 kOhms (about the highest value we expect) takes
+  about 10 ms. After that the capacitor should discharge for at least 50 ms,
+  better 100 ms, so we can do some 6 measurements per second.
 */
 static void temp_measure(void) {
 
@@ -124,24 +141,16 @@ static void temp_measure(void) {
   // Start Timer 1 with prescaling f/8.
   TCCR1B = (1 << CS11);
 
-  // Start loading the capacitor.
+  // Start loading the capacitor and as such, ADC.
+  conversion_done = 0;
   WRITE(TEMP_C, 1);
 
-  // Start Analog Comparator.
-  conversion_done = 0;
-  ACSR &= ~(1 << ACD);
-
-  // Wait a second while polling USB.
+  // While ADC does its work, wait a second while polling USB.
   poll_a_second();
 
   if ( ! conversion_done) {
     temp_c = 0;
   }
-
-  // Discharge the capacitor. Could be started inside the interrupt.
-  WRITE(TEMP_C, 0);
-  poll_a_second();
-  poll_a_second();
 }
 
 /**
@@ -151,20 +160,25 @@ static void temp_measure(void) {
 */
 ISR(ANA_COMP_vect) {
 
-  // Read result. 16-bit values have to be read atomically. As this is
-  // interrupt time, interrupts are already locked, so no special measurements
-  // needed.
-  temp_c = TCNT1;
+  /**
+    As the ACD runs all the time, we usually receive multiple triggers per
+    measurement. Tests indicated about 3 trigger on each. Avoid this by
+    ignoring additional triggers.
+  */
+  if ( ! conversion_done) {
+    // Read result. 16-bit values have to be read atomically. As this is
+    // interrupt time, interrupts are already locked, so no special care
+    // required.
+    temp_c = TCNT1;
 
-  // Stop Timer 0
-  TCCR1B = 0;
+    // Stop Timer 0
+    TCCR1B = 0;
 
-  // Stop Analog Comparator.
-  ACSR |= (1 << ACD);
+    conversion_done = 1;
 
-  conversion_done = 1;
-
-  // We could start discharging here.
+    // Start discharging.
+    WRITE(TEMP_C, 0);
+  }
 }
 
 /* ---- Application ------------------------------------------------------- */
