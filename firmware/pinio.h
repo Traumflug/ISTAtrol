@@ -88,22 +88,26 @@
 #define LED_G_DDR       DDRB
 #define LED_G_PWM       NULL
 
-//EEEEEKKKK
-//EEEEEKKKK
-//EEEEEKKKK
-//EEEEEKKKK
-#undef PD6
-#define PD6_PIN			PIND6
-#define PD6_RPORT		PIND
-#define PD6_WPORT		PORTD
-#define PD6_DDR			DDRD
-#define PD6_PWM			&OCR2B
+// Temperature sensor on the ISTA counter.
+// Currently PD3, which likely changes, as this pin is also INT1.
+#define TEMP_C_PIN      PIND3
+#define TEMP_C_RPORT    PIND
+#define TEMP_C_WPORT    PORTD
+#define TEMP_C_DDR      DDRD
+#define TEMP_C_PWM      NULL
 
-#undef PD7
-#define PD7_PIN			PIND7
-#define PD7_RPORT		PIND
-#define PD7_WPORT		PORTD
-#define PD7_DDR			DDRD
-#define PD7_PWM			&OCR2A
+// Temperature sensor on the radiator valve.
+#define TEMP_V_PIN      PIND4
+#define TEMP_V_RPORT    PIND
+#define TEMP_V_WPORT    PORTD
+#define TEMP_V_DDR      DDRD
+#define TEMP_V_PWM      NULL
+
+// Temperature sensor room.
+#define TEMP_R_PIN      PIND5
+#define TEMP_R_RPORT    PIND
+#define TEMP_R_WPORT    PORTD
+#define TEMP_R_DDR      DDRD
+#define TEMP_R_PWM      &OC0B
 
 #endif /* _PINIO_H */

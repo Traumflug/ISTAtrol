@@ -49,20 +49,15 @@ class ISTAtrolPort:
     #                160 - 255 works and returns 'B' and 4 zeros
     #
     # data_or_wLength has to be at least as big as the number of bytes returned.
-    print("Sending 1.")
-    result = self.dev.ctrl_transfer(0xC0, 1, 0, 0, 10)
-    print(result.tobytes().decode('ascii'))
-    print("Sending 'x'.")
-    result = self.dev.ctrl_transfer(0xC0, ord('x'), 0, 0, 10)
-    print(result.tobytes().decode('ascii'))
-    print("Sending 'h'.")
-    result = self.dev.ctrl_transfer(0xC0, ord('h'), 0, 0, 10)
-    print(result.tobytes().decode('ascii'))
+    result = self.dev.ctrl_transfer(0xC0, ord('c'), 0, 0, 10)
+    print(result[1] * 256 + result[0])
 
 
 dev = ISTAtrolPort()
 dev.open()
 
-dev.do()
+while 1:
+  dev.do()
+  time.sleep(3)
 
 # Done.
