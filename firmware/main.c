@@ -32,7 +32,7 @@ uint8_t lastTimer0Value; // See osctune.h.
   We don't need to store much status because we don't implement multiple chunks
   in read/write transfers.
 */
-static uint8_t replyBuffer[8];
+static uint8_t reply_buffer[8];
 
 
 /* ---- USB related functions --------------------------------------------- */
@@ -59,28 +59,28 @@ usbMsgLen_t usbFunctionSetup(uchar data[8]) {
   usbRequest_t *rq = (void *)data;
 
   if (rq->bRequest == 'h') {
-    replyBuffer[0] = 'H';
-    replyBuffer[1] = 'e';
-    replyBuffer[2] = 'l';
-    replyBuffer[3] = 'l';
-    replyBuffer[4] = 'o';
+    reply_buffer[0] = 'H';
+    reply_buffer[1] = 'e';
+    reply_buffer[2] = 'l';
+    reply_buffer[3] = 'l';
+    reply_buffer[4] = 'o';
     len = 5;
   } else {
-    replyBuffer[0] = 'H';
-    replyBuffer[1] = 'u';
-    replyBuffer[2] = 'h';
-    replyBuffer[3] = '?';
+    reply_buffer[0] = 'H';
+    reply_buffer[1] = 'u';
+    reply_buffer[2] = 'h';
+    reply_buffer[3] = '?';
     len = 4;
   }
 
-  usbMsgPtr = replyBuffer;
+  usbMsgPtr = reply_buffer;
   return len;
 }
 
 
 /* ---- Application ------------------------------------------------------- */
 
-static void hardwareInit(void) {
+static void hardware_init(void) {
 
   /**
     Even if you don't use the watchdog, turn it off here. On newer devices,
@@ -101,7 +101,7 @@ static void hardwareInit(void) {
 
 int main(void) {
 
-  hardwareInit();
+  hardware_init();
   usbInit();
   sei();
 
