@@ -32,7 +32,10 @@ uint8_t lastTimer0Value; // See osctune.h.
   We don't need to store much status because we don't implement multiple chunks
   in read/write transfers.
 */
-static uint8_t reply_buffer[8];
+static union {
+  uint8_t byte[8];
+  uint16_t value[4];
+} reply;
 
 /**
   Our last temperature measurements.
@@ -40,6 +43,7 @@ static uint8_t reply_buffer[8];
 static uint16_t temp_c = 0;
 static uint16_t temp_v = 0;
 static uint16_t temp_r = 0;
+static uint16_t temp_temp = 0;
 static uint8_t conversion_done = 0;
 
 
@@ -67,13 +71,17 @@ usbMsgLen_t usbFunctionSetup(uchar data[8]) {
   usbRequest_t *rq = (void *)data;
 
   if (rq->bRequest == 'c') {
-    // TODO: copying 16 bits into 2x 8 bits this way is inefficient.
-    reply_buffer[0] = temp_c & 0x00FF;
-    reply_buffer[1] = (temp_c & 0xFF00) >> 8;
+    reply.value[0] = temp_c;
     len = 2;
+#ifdef MULTISENSOR_BROKEN
+    reply.value[1] = temp_v;
+    len = 4;
+    reply.value[2] = temp_r;
+    len = 6;
+#endif
   }
 
-  usbMsgPtr = reply_buffer;
+  usbMsgPtr = reply.byte;
   return len;
 }
 
@@ -113,7 +121,10 @@ static void temp_init(void) {
   TCCR1B = (1 << CS11);
 
   SET_OUTPUT(TEMP_C);
-  WRITE(TEMP_C, 0);
+#ifdef MULTISENSOR_BROKEN
+  SET_OUTPUT(TEMP_V);
+  SET_OUTPUT(TEMP_R);
+#endif
 }
 
 /**
@@ -134,23 +145,55 @@ static void temp_init(void) {
   A measurement with these 30 kOhms (about the highest value we expect) takes
   about 10 ms. After that the capacitor should discharge for at least 50 ms,
   better 100 ms, so we can do some 6 measurements per second.
+
+  This procedure measures all three sensors and takes about 0.6 seconds. USB
+  is taken care of.
 */
 static void temp_measure(void) {
 
+  /**
+    First step is to measure the sensor connected to the ISTA counter.
+  */
   // Clear Timer 1. Write the high byte first to make it an atomic write.
   TCNT1H = 0;
   TCNT1L = 0;
 
   // Start loading the capacitor and as such, ADC.
   conversion_done = 0;
+  temp_temp = 0;
   WRITE(TEMP_C, 1);
 
   // While ADC does its work, wait a second while polling USB.
   poll_a_second();
 
-  if ( ! conversion_done) {
-    temp_c = 0;
-  }
+  // Store measurement.
+  temp_c = temp_temp;
+
+#ifdef MULTISENSOR_BROKEN
+  /**
+    Do the same for the sensor connected to the radiator valve.
+  */
+  TCNT1H = 0;
+  TCNT1L = 0;
+  conversion_done = 0;
+  temp_temp = 0;
+  WRITE(TEMP_V, 1);
+  poll_a_second();
+  temp_v = temp_temp;
+
+  /**
+    Third and last, measure the room temperature sensor.
+  */
+  TCNT1H = 0;
+  TCNT1L = 0;
+  conversion_done = 0;
+  temp_temp = 0;
+  WRITE(TEMP_R, 1);
+  poll_a_second();
+  temp_r = temp_temp;
+#endif
+
+  // Done.
 }
 
 /**
@@ -169,11 +212,15 @@ ISR(ANA_COMP_vect) {
     // Read result. 16-bit values have to be read atomically. As this is
     // interrupt time, interrupts are already locked, so no special care
     // required.
-    temp_c = TCNT1;
+    temp_temp = TCNT1;
     conversion_done = 1;
 
     // Start discharging.
     WRITE(TEMP_C, 0);
+#ifdef MULTISENSOR_BROKEN
+    WRITE(TEMP_V, 0);
+    WRITE(TEMP_R, 0);
+#endif
   }
 }
 
@@ -189,9 +236,6 @@ static void hardware_init(void) {
 
   // Set time 0 prescaler to 64 (see osctune.h).
   TCCR0B = 0x03;
-
-  SET_OUTPUT(LED_Y);
-  WRITE(LED_Y, 0);
 
   temp_init();
 

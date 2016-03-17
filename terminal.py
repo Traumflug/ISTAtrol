@@ -50,7 +50,9 @@ class ISTAtrolPort:
     #
     # data_or_wLength has to be at least as big as the number of bytes returned.
     result = self.dev.ctrl_transfer(0xC0, ord('c'), 0, 0, 10)
-    print(result[1] * 256 + result[0])
+    print("Counter %5d" % (result[1] * 256 + result[0]))
+    #print("Counter %5d -- Valve %5d" %
+    #      (result[1] * 256 + result[0], result[3] * 256 + result[2]))
 
 
 dev = ISTAtrolPort()
