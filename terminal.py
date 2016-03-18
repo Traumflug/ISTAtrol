@@ -23,6 +23,7 @@ class ISTAtrolPort:
     self.idVendor = idVendor;
     self.idProduct = idProduct;
     self.dev = None
+    self.count = 0
 
   def open(self):
     self.dev = usb.core.find(idVendor = self.idVendor, idProduct = self.idProduct)
@@ -50,7 +51,8 @@ class ISTAtrolPort:
     #
     # data_or_wLength has to be at least as big as the number of bytes returned.
     result = self.dev.ctrl_transfer(0xC0, ord('c'), 0, 0, 10)
-    print("Counter %5d" % (result[1] * 256 + result[0]))
+    print("%5d\t%5d" % (self.count, result[1] * 256 + result[0]))
+    self.count += 1
     #print("Counter %5d -- Valve %5d" %
     #      (result[1] * 256 + result[0], result[3] * 256 + result[2]))
 
