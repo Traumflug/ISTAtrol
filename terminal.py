@@ -62,6 +62,6 @@ dev.open()
 
 while 1:
   dev.do()
-  time.sleep(1)
+  time.sleep(60)
 
 # Done.

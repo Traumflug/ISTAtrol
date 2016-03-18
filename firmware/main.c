@@ -21,6 +21,91 @@
 #include "pinio.h"
 
 
+/* ---- Start calibration values ------------------------------------------ */
+
+/**
+  About calibration values in general.
+
+  We're tight on flash memory, so we can't afford to allow setting changes at
+  runtime, as long as we also feature an USB connection. Without USB we'd
+  need a display, which we barely have the room for, too.
+
+  Probably there's no way around upgrading to an ATtiny4313 with more Flash to
+  improve on this. Or to fit an oscillator crystal onto the board, because
+  V-USB implementation for 20 MHz is a whopping 384 bytes smaller than the
+  crystal-free 12.8 MHz version.
+*/
+
+/** \def TARGET_TEMPERATURE
+
+  This is our main goal!
+
+  Unit is thermistor readout, which reacty the opposite way than a thermometer
+  display. Lower values mean higher temperature, higher values mean colder.
+  Best value is found during calibration.
+
+  Unit:  1
+  Range: 500..65000
+*/
+#define TARGET_TEMPERATURE 5800
+
+/** \def THERMISTOR_HYSTERESIS
+
+  This is how much the thermistor readout is allowed to deviate from
+  TARGET_TEMPERATURE before the valve is moved. Thermistor readouts jitter
+  quite a bit, so set this not too small.
+
+  Smaller values give more precision. Too small values make the valve motor
+  move back and forth all the time. Bigger values are harmless but may result
+  in considerable deviations from the target temperature.
+
+  Unit:  1
+  Range: 0..499
+*/
+#define THERMISTOR_HYSTERESIS 30
+
+/** \def RADIATOR_RESPONSE_TIME
+
+  If the valve is opened, it takes considerable time until the temperature
+  sensor on the ISTA counter sees a temperature raise. It makes no sense, to
+  actuate the valve a second time within this delay. Actually it's harmful to
+  do so, because this can cause overreactions.
+
+  The initial value is found during calibration. Too large values lead to a
+  slow regulation response. Too small values may lead to overreactions, up
+  to unstable behaviour (valve moving full open and full close all the time).
+
+  Unit:  seconds
+  Range: 0..65535
+*/
+#define RADIATOR_RESPONSE_TIME 300
+
+/** \def MOT_OPEN_TIME
+
+  Time to run the valve motor on a valve open operation. As we're extremely
+  tight on Flash space, this is a constant value. A better implementation
+  would allow to set this time by the caller, but then we'd have to pass a
+  parameter, which costs a few bytes per call.
+
+  Unit:  10 milliseconds
+  Range: 1..255
+*/
+#define MOT_OPEN_TIME 10
+
+/** \def MOT_CLOSE_TIME
+
+  Same as MOT_OPEN_TIME, but for the opposite valve movement. This is a
+  distinct value to allow closing the valve faster than opening it. Closing
+  faster may help to not overshoot the target temperature.
+
+  Unit:  10 milliseconds
+  Range: 1..255
+*/
+#define MOT_CLOSE_TIME 20
+
+/* ---- End calibration values -------------------------------------------- */
+
+
 /**
   Using continuous calibration is much smaller (36 bytes, in osctune.h, vs.
   194 bytes for reset-time calibration, osccal.c) and ensures working USB for
@@ -46,6 +131,50 @@ static uint16_t temp_r = 0;
 static uint16_t temp_temp = 0;
 static uint8_t conversion_done = 0;
 
+/* ---- Valve motor movements --------------------------------------------- */
+
+/**
+  Intitialise for motor movements. Nothing special.
+
+  The valve motor takes just about 15 mA (40 mA when blocked), so it's
+  connected directly to two I/O pins. This should work as long an these two
+  pins are never configured as input.
+
+  To move the motor in one direction, one pin is set to High, to move the
+  motor the other direction, the other pin is set to High. Each time the
+  second pin is kept Low.
+*/
+static void motor_init(void) {
+
+  SET_OUTPUT(MOT_OPEN);
+  WRITE(MOT_OPEN, 0);
+  SET_OUTPUT(MOT_CLOSE);
+  WRITE(MOT_CLOSE, 0);
+}
+
+/**
+  Run the motor to open the valve a bit.
+
+  Yes, we should call usbPoll every 40 ms, but for now, let's try without.
+*/
+static void motor_open(void) {
+
+  WRITE(MOT_OPEN, 1);
+  _delay_ms(MOT_OPEN_TIME);
+  WRITE(MOT_OPEN, 0);
+}
+
+/**
+  Run the motor to close the valve a bit.
+
+  Yes, we should call usbPoll every 40 ms, but for now, let's try without.
+*/
+static void motor_close(void) {
+
+  WRITE(MOT_CLOSE, 1);
+  _delay_ms(MOT_CLOSE_TIME);
+  WRITE(MOT_CLOSE, 0);
+}
 
 /* ---- USB related functions --------------------------------------------- */
 
@@ -89,12 +218,14 @@ usbMsgLen_t usbFunctionSetup(uchar data[8]) {
   Poll USB while doing nothing for sufficient time to allow the ADC capacitor
   to discharge. If there's something to do on the USB bus, the delay can be
   considerably longer.
+
+  Note that this is also the basis for caclulating RADIATOR_RESPONSE_TIME.
 */
 static void poll_a_second(void) {
   uint8_t i;
 
   // Count to at least 5, else binary size grows significantly (50 bytes).
-  for (i = 0; i < 5; i++) {
+  for (i = 0; i < 25; i++) {
     usbPoll();
     _delay_ms(40);
   }
@@ -239,19 +370,36 @@ static void hardware_init(void) {
 
   temp_init();
 
+  motor_init();
+
   usbDeviceDisconnect();
   _delay_ms(300);
   usbDeviceConnect();
 }
 
 int main(void) {
+  uint16_t time = 0;
 
   hardware_init();
   usbInit();
   sei();
 
   for (;;) {    /* main event loop */
+
     temp_measure(); // Also polls USB.
+
+    time++;
+    // Loop count here also depends on how much poll_a_second() actually
+    // delays and how often temp_measure() calls poll_a_second().
+    if (time > RADIATOR_RESPONSE_TIME) {
+      if (temp_c > TARGET_TEMPERATURE + THERMISTOR_HYSTERESIS) { // Too hot.
+        motor_close();
+      }
+      if (temp_c < TARGET_TEMPERATURE - THERMISTOR_HYSTERESIS) { // Too cold.
+        motor_open();
+      }
+      time = 0;
+    }
   }
 }
 

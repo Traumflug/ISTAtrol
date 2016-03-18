@@ -110,4 +110,18 @@
 #define TEMP_R_DDR      DDRD
 #define TEMP_R_PWM      &OC0B
 
+// Valve motor, open direction.
+#define MOT_OPEN_PIN    PINB3
+#define MOT_OPEN_RPORT  PINB
+#define MOT_OPEN_WPORT  PORTB
+#define MOT_OPEN_DDR    DDRB
+#define MOT_OPEN_PWM    &OC1A
+
+// Valve motor, close direction.
+#define MOT_CLOSE_PIN   PINB4
+#define MOT_CLOSE_RPORT PINB
+#define MOT_CLOSE_WPORT PORTB
+#define MOT_CLOSE_DDR   DDRB
+#define MOT_CLOSE_PWM   &OC1B
+
 #endif /* _PINIO_H */
