@@ -47,7 +47,7 @@
   Unit:  1
   Range: 500..65000
 */
-#define TARGET_TEMPERATURE 5800
+#define TARGET_TEMPERATURE 5700
 
 /** \def THERMISTOR_HYSTERESIS
 
@@ -75,10 +75,10 @@
   slow regulation response. Too small values may lead to overreactions, up
   to unstable behaviour (valve moving full open and full close all the time).
 
-  Unit:  seconds
+  Unit:  seconds (approximately)
   Range: 0..65535
 */
-#define RADIATOR_RESPONSE_TIME 300
+#define RADIATOR_RESPONSE_TIME 100
 
 /** \def MOT_OPEN_TIME
 
@@ -87,10 +87,10 @@
   would allow to set this time by the caller, but then we'd have to pass a
   parameter, which costs a few bytes per call.
 
-  Unit:  10 milliseconds
-  Range: 1..255
+  Unit:  milliseconds
+  Range: 1..6500
 */
-#define MOT_OPEN_TIME 10
+#define MOT_OPEN_TIME 200
 
 /** \def MOT_CLOSE_TIME
 
@@ -98,10 +98,10 @@
   distinct value to allow closing the valve faster than opening it. Closing
   faster may help to not overshoot the target temperature.
 
-  Unit:  10 milliseconds
-  Range: 1..255
+  Unit:  milliseconds
+  Range: 1..6500
 */
-#define MOT_CLOSE_TIME 20
+#define MOT_CLOSE_TIME 1000
 
 /* ---- End calibration values -------------------------------------------- */
 
@@ -121,6 +121,15 @@ static union {
   uint8_t byte[8];
   uint16_t value[4];
 } reply;
+
+/**
+  Track wether a valve motor movement happened.
+
+  Values: ' '  no motor movement
+          '+'  valve opened
+          '-'  valve closed
+*/
+uint8_t motor_moved = ' ';
 
 /**
   Our last temperature measurements.
@@ -201,7 +210,9 @@ usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 
   if (rq->bRequest == 'c') {
     reply.value[0] = temp_c;
-    len = 2;
+    reply.byte[2] = motor_moved;
+    len = 3;
+    motor_moved = ' ';
 #ifdef MULTISENSOR_BROKEN
     reply.value[1] = temp_v;
     len = 4;
@@ -329,8 +340,8 @@ static void temp_measure(void) {
 
 /**
   Read out the temperature measurement result. Timer 1 is started at zero in
-  temp_measure() and counts up until this interrupt is triggered. By doing
-  so we get a measurement by reading Timer 1 here.
+  temp_measure() and counts up until this interrupt is triggered. By reading
+  Timer 1 here we get a measurement.
 */
 ISR(ANA_COMP_vect) {
 
@@ -379,6 +390,7 @@ static void hardware_init(void) {
 
 int main(void) {
   uint16_t time = 0;
+  uint16_t temp_last = 0;
 
   hardware_init();
   usbInit();
@@ -392,13 +404,52 @@ int main(void) {
     // Loop count here also depends on how much poll_a_second() actually
     // delays and how often temp_measure() calls poll_a_second().
     if (time > RADIATOR_RESPONSE_TIME) {
-      if (temp_c > TARGET_TEMPERATURE + THERMISTOR_HYSTERESIS) { // Too hot.
-        motor_close();
+      /**
+        This is the regulation algorithm. A tricky thing, because temperature
+        response to valve movements are extremely slow, some 10 minutes on
+        the Traumflug's radiator.
+
+        As we move the valve in increments only, not to absolute positions,
+        this is a pure integral ('I') regulator, no proportional of
+        differential part of PID. The big advantage of this is that we don't
+        have to know our absolute position; an information difficult to
+        get without endstops.
+
+        Simple Bang-Bang (on this I term) led to instability with
+        RADIATOR_RESPONSE_TIME = 200, MOT_OPEN_TIME = 200 and
+        MOT_CLOSE_TIME = 2000.
+
+        So we add a predictive part. If temperature moves into the right
+        direction already, we can expect it to reach target without doing
+        anything, so we don't move the valve. This made temperature changes
+        a lot less steep, overshoots were reduced from 5 degC to 1.5 degC
+        with the same settings.
+
+        With RADIATOR_RESPONSE_TIME = 100, MOT_OPEN_TIME = 200 and
+        MOT_CLOSE_TIME = 1000 (more frequent updates, open time more agressive)
+        we reached overshoot of 0.5 degC and undershoot of about 1.8 degC,
+        which is quite usable already.
+      */
+      // Bang-Bang part. Thermistor reading too small -> temperature too hot.
+      if (temp_c < (TARGET_TEMPERATURE - THERMISTOR_HYSTERESIS)) {
+        // Predictive part. Move valve only if thermistor reading didn't raise.
+        // We ignore jitter here because a jitter to our disadvantage this
+        // time is likely a jitter the other way next time.
+        if (temp_c < temp_last) {
+          motor_close();
+          motor_moved = '-';
+        }
       }
-      if (temp_c < TARGET_TEMPERATURE - THERMISTOR_HYSTERESIS) { // Too cold.
-        motor_open();
+      // Bang-Bang part. Thermistor reading too large -> temperature too cold.
+      if (temp_c > (TARGET_TEMPERATURE + THERMISTOR_HYSTERESIS)) {
+        // Predictive part. Move valve only if thermistor reading didn't fall.
+        if (temp_c > temp_last) {
+          motor_open();
+          motor_moved = '+';
+        }
       }
       time = 0;
+      temp_last = temp_c;
     }
   }
 }

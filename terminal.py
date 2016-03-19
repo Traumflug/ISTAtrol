@@ -51,7 +51,29 @@ class ISTAtrolPort:
     #
     # data_or_wLength has to be at least as big as the number of bytes returned.
     result = self.dev.ctrl_transfer(0xC0, ord('c'), 0, 0, 10)
-    print("%5d\t%5d" % (self.count, result[1] * 256 + result[0]))
+    readingC = result[1] * 256 + result[0]
+
+    # Putting the value pairs recorded in Calibration measurements.gnumeric
+    # into a linear regression tool like
+    #   http://www.arndt-bruenner.de/mathe/scripts/regr.htm
+    # we get this linear fomula:
+    #
+    #  f(x) = -0,00791 * x + 71,445927
+    #
+    # Let's take this formula to get an idea about the temperature
+    # in deg Celsius:
+    tempC = -0.00791 * readingC + 71.445927
+
+    if chr(result[2]) == '+':
+      valveText = "  (Valve opened)"
+    elif chr(result[2]) == '-':
+      valveText = "  (Valve closed)"
+    else:
+      valveText = ""
+
+    print("%5d\t%5d\t%2.1f°C\t%s%s" %
+          (self.count, result[1] * 256 + result[0], tempC,
+           time.strftime("%X"), valveText))
     self.count += 1
     #print("Counter %5d -- Valve %5d" %
     #      (result[1] * 256 + result[0], result[3] * 256 + result[2]))
@@ -61,7 +83,14 @@ dev = ISTAtrolPort()
 dev.open()
 
 while 1:
-  dev.do()
+  try:
+    dev.do()
+  except:
+    print(sys.exc_info())
+    print("... trying again ...")
+    time.sleep(10)
+    dev.open()
+    continue
   time.sleep(60)
 
 # Done.
