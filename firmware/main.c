@@ -137,8 +137,10 @@ static union {
   Our last temperature measurements.
 */
 static uint16_t temp_c = 0;
+#ifdef MULTISENSOR_BROKEN
 static uint16_t temp_v = 0;
 static uint16_t temp_r = 0;
+#endif
 static uint16_t temp_temp = 0;
 static uint8_t conversion_done = 0;
 
