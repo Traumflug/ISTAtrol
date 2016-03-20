@@ -152,8 +152,8 @@ static uint16_t temp_c = 0;
 #ifdef MULTISENSOR_BROKEN
 static uint16_t temp_v = 0;
 static uint16_t temp_r = 0;
-static uint16_t temp_temp = 0;
 #endif
+static uint16_t temp_temp = 0;
 static uint8_t conversion_done = 0;
 
 #ifndef CAN_AFFORD_USB_COMMANDS
@@ -338,20 +338,16 @@ static void temp_measure(void) {
 
   // Start loading the capacitor and as such, ADC.
   conversion_done = 0;
-#ifdef MULTISENSOR_BROKEN
   temp_temp = 0;
-#else
-  temp_c = 0;
-#endif
   WRITE(TEMP_C, 1);
 
   // While ADC does its work, wait a second while polling USB.
   poll_a_second();
 
-#ifdef MULTISENSOR_BROKEN
-  // Store measurement.
-  temp_c = temp_temp;
+  // Store measurement with a two-point moving average for denoising.
+  temp_c = (temp_temp + temp_c + 1) / 2;
 
+#ifdef MULTISENSOR_BROKEN
   /**
     Do the same for the sensor connected to the radiator valve.
   */
@@ -394,11 +390,7 @@ ISR(ANA_COMP_vect) {
     // Read result. 16-bit values have to be read atomically. As this is
     // interrupt time, interrupts are already locked, so no special care
     // required.
-#ifdef MULTISENSOR_BROKEN
     temp_temp = TCNT1;
-#else
-    temp_c = TCNT1;
-#endif
     conversion_done = 1;
 
     // Start discharging.
