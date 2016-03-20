@@ -45,7 +45,7 @@
   Best value is found during calibration.
 
   Unit:  1
-  Range: 500..65000
+  Range: 500..32267
 */
 #define TARGET_TEMPERATURE 5700
 
@@ -80,6 +80,18 @@
 */
 #define RADIATOR_RESPONSE_TIME 100
 
+/** \def PREDICTION_STEEPNESS
+
+  When deciding about valve movements, the regulation algorithm tries to
+  predict the future by by extrapolating the last temperature change. This
+  value says how far to extrapolate. Larger values make regulation more
+  aggressive, smaller values make it less agrgressive.
+
+  Unit:  1
+  Range: 1, 2, 4, 8 or 16 (must be exponent 2 to keep the binary small)
+*/
+#define PREDICTION_STEEPNESS 4
+
 /** \def MOT_OPEN_TIME
 
   Time to run the valve motor on a valve open operation. As we're extremely
@@ -101,7 +113,7 @@
   Unit:  milliseconds
   Range: 1..6500
 */
-#define MOT_CLOSE_TIME 1000
+#define MOT_CLOSE_TIME 400
 
 /* ---- End calibration values -------------------------------------------- */
 
@@ -154,8 +166,9 @@ static uint8_t conversion_done = 0;
 */
 static struct {
   uint16_t temp_last;
+  uint16_t temp_future;
   uint8_t motor_moved;
-} answer = { 0, ' '};
+} answer = { 0, 0, ' '};
 #endif
 
 /* ---- Valve motor movements --------------------------------------------- */
@@ -435,6 +448,8 @@ int main(void) {
     // Loop count here also depends on how much poll_a_second() actually
     // delays and how often temp_measure() calls poll_a_second().
     if (time > RADIATOR_RESPONSE_TIME) {
+      //uint16_t temp_future = 0; // See struct answer above.
+
       /**
         This is the regulation algorithm. A tricky thing, because temperature
         response to valve movements are extremely slow, some 10 minutes on
@@ -446,41 +461,36 @@ int main(void) {
         have to know our absolute position; an information difficult to
         get without endstops.
 
-        Simple Bang-Bang (on this I term) led to instability with
-        RADIATOR_RESPONSE_TIME = 200, MOT_OPEN_TIME = 200 and
-        MOT_CLOSE_TIME = 2000.
+        We use a full predictive model. Temperature change since the last
+        measurement is extrapolated, then the valve actuated to get this future
+        value into the hysteresis corridor. This should lead to valve movements
+        calming down in steady situations, still quick reactions on environment
+        changes.
 
-        So we add a predictive part. If temperature moves into the right
-        direction already, we can expect it to reach target without doing
-        anything, so we don't move the valve. This made temperature changes
-        a lot less steep, overshoots were reduced from 5 degC to 1.5 degC
-        with the same settings.
+        Previous models used kind of a Bang-Bang, then with an additional look
+        at how much temperature changed. Both led to constant changes between
+        extremes.
 
-        With RADIATOR_RESPONSE_TIME = 100, MOT_OPEN_TIME = 200 and
-        MOT_CLOSE_TIME = 1000 (more frequent updates, open time more agressive)
-        we reached overshoot of 0.5 degC and undershoot of about 1.8 degC,
-        which is quite usable already.
+        One problem left is noise in temperature measurements. A countermeasure
+        would be a moving average, but we have neither sufficient Flash nor
+        sufficient RAM to implement such a thing.
       */
-      answer.motor_moved = ' ';
+      // Extrapolation. Take care of the sign.
+      answer.temp_future = (temp_c + PREDICTION_STEEPNESS *
+                            ((int16_t)temp_c - (int16_t)answer.temp_last));
 
-      // Bang-Bang part. Thermistor reading too small -> temperature too hot.
-      if (temp_c < (TARGET_TEMPERATURE - THERMISTOR_HYSTERESIS)) {
-        // Predictive part. Move valve only if thermistor reading didn't raise.
-        // We ignore jitter here because a jitter to our disadvantage this
-        // time is likely a jitter the other way next time.
-        if (temp_c < answer.temp_last) {
-          motor_close();
-          answer.motor_moved = '-';
-        }
+      // Act according to the prediction.
+      if (answer.temp_future < (TARGET_TEMPERATURE - THERMISTOR_HYSTERESIS)) {
+        motor_close();
+        answer.motor_moved = '-';
+      } else
+      if (answer.temp_future > (TARGET_TEMPERATURE + THERMISTOR_HYSTERESIS)) {
+        motor_open();
+        answer.motor_moved = '+';
+      } else {
+        answer.motor_moved = ' ';
       }
-      // Bang-Bang part. Thermistor reading too large -> temperature too cold.
-      if (temp_c > (TARGET_TEMPERATURE + THERMISTOR_HYSTERESIS)) {
-        // Predictive part. Move valve only if thermistor reading didn't fall.
-        if (temp_c > answer.temp_last) {
-          motor_open();
-          answer.motor_moved = '+';
-        }
-      }
+
       time = 0;
       answer.temp_last = temp_c;
     }

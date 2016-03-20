@@ -64,19 +64,17 @@ class ISTAtrolPort:
     # in deg Celsius:
     tempC = -0.00791 * readingC + 71.445927
 
-    if chr(result[2]) == '+':
+    if chr(result[4]) == '+':
       valveText = "  (Valve opened)"
-    elif chr(result[2]) == '-':
+    elif chr(result[4]) == '-':
       valveText = "  (Valve closed)"
     else:
       valveText = ""
 
-    print("%5d\t%5d\t%2.1f°C\t%s%s" %
+    print("%5d\t%5d\t%2.1f°C\t%5d\t%s%s" %
           (self.count, result[1] * 256 + result[0], tempC,
-           time.strftime("%X"), valveText))
+            result[3] * 256 + result[2], time.strftime("%X"), valveText))
     self.count += 1
-    #print("Counter %5d -- Valve %5d" %
-    #      (result[1] * 256 + result[0], result[3] * 256 + result[2]))
 
 
 dev = ISTAtrolPort()
