@@ -117,10 +117,12 @@ uint8_t lastTimer0Value; // See osctune.h.
   We don't need to store much status because we don't implement multiple chunks
   in read/write transfers.
 */
+#ifdef CAN_AFFORD_USB_COMMANDS
 static union {
   uint8_t byte[8];
   uint16_t value[4];
 } reply;
+#endif
 
 /**
   Track wether a valve motor movement happened.
@@ -129,7 +131,7 @@ static union {
           '+'  valve opened
           '-'  valve closed
 */
-uint8_t motor_moved = ' ';
+//uint8_t motor_moved = ' '; // See struct answer below.
 
 /**
   Our last temperature measurements.
@@ -139,6 +141,20 @@ static uint16_t temp_v = 0;
 static uint16_t temp_r = 0;
 static uint16_t temp_temp = 0;
 static uint8_t conversion_done = 0;
+
+#ifndef CAN_AFFORD_USB_COMMANDS
+/**
+  The only answer to USB commands. As we can't afford to copy values into a
+  response (costs 8 bytes Flash per byte copied), use a static struct for
+  this answer.
+
+  Regular variables are kept in comments and moved in and out here as needed.
+*/
+static struct {
+  uint16_t temp_last;
+  uint8_t motor_moved;
+} answer = { 0, ' '};
+#endif
 
 /* ---- Valve motor movements --------------------------------------------- */
 
@@ -204,6 +220,7 @@ static void motor_close(void) {
     } usbRequest_t;
 */
 usbMsgLen_t usbFunctionSetup(uchar data[8]) {
+#ifdef CAN_AFFORD_USB_COMMANDS
   uint8_t len = 0;
   // Cast to structured data for parsing.
   usbRequest_t *rq = (void *)data;
@@ -223,6 +240,10 @@ usbMsgLen_t usbFunctionSetup(uchar data[8]) {
 
   usbMsgPtr = reply.byte;
   return len;
+#endif
+
+  usbMsgPtr = (void *)&answer;
+  return sizeof(answer);
 }
 
 /**
@@ -390,7 +411,7 @@ static void hardware_init(void) {
 
 int main(void) {
   uint16_t time = 0;
-  uint16_t temp_last = 0;
+  //uint16_t temp_last = 0; // See struct answer above.
 
   hardware_init();
   usbInit();
@@ -430,26 +451,28 @@ int main(void) {
         we reached overshoot of 0.5 degC and undershoot of about 1.8 degC,
         which is quite usable already.
       */
+      answer.motor_moved = ' ';
+
       // Bang-Bang part. Thermistor reading too small -> temperature too hot.
       if (temp_c < (TARGET_TEMPERATURE - THERMISTOR_HYSTERESIS)) {
         // Predictive part. Move valve only if thermistor reading didn't raise.
         // We ignore jitter here because a jitter to our disadvantage this
         // time is likely a jitter the other way next time.
-        if (temp_c < temp_last) {
+        if (temp_c < answer.temp_last) {
           motor_close();
-          motor_moved = '-';
+          answer.motor_moved = '-';
         }
       }
       // Bang-Bang part. Thermistor reading too large -> temperature too cold.
       if (temp_c > (TARGET_TEMPERATURE + THERMISTOR_HYSTERESIS)) {
         // Predictive part. Move valve only if thermistor reading didn't fall.
-        if (temp_c > temp_last) {
+        if (temp_c > answer.temp_last) {
           motor_open();
-          motor_moved = '+';
+          answer.motor_moved = '+';
         }
       }
       time = 0;
-      temp_last = temp_c;
+      answer.temp_last = temp_c;
     }
   }
 }
