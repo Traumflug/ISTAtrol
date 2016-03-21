@@ -24,6 +24,7 @@ class ISTAtrolPort:
     self.idProduct = idProduct;
     self.dev = None
     self.count = 0
+    self.lastC = 0
 
   def open(self):
     self.dev = usb.core.find(idVendor = self.idVendor, idProduct = self.idProduct)
@@ -64,16 +65,17 @@ class ISTAtrolPort:
     # in deg Celsius:
     tempC = -0.00791 * readingC + 71.445927
 
-    if chr(result[2]) == '+':
-      valveText = "  (Valve opened)"
-    elif chr(result[2]) == '-':
-      valveText = "  (Valve closed)"
-    else:
-      valveText = ""
+    valveText = ""
+    if readingC != self.lastC: # Ignore duplicates.
+      if chr(result[2]) == '+':
+        valveText = "  (Valve opened)"
+      elif chr(result[2]) == '-':
+        valveText = "  (Valve closed)"
 
     print("%5d\t%5d\t%2.1f°C\t%s%s" % (self.count, result[1] * 256 + result[0],
                                        tempC, time.strftime("%X"), valveText))
     self.count += 1
+    self.lastC = readingC
 
 
 dev = ISTAtrolPort()
