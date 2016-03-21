@@ -166,9 +166,8 @@ static uint8_t conversion_done = 0;
 */
 static struct {
   uint16_t temp_last;
-  uint16_t temp_future;
   uint8_t motor_moved;
-} answer = { 0, 0, ' '};
+} answer;
 #endif
 
 /* ---- Valve motor movements --------------------------------------------- */
@@ -440,7 +439,7 @@ int main(void) {
     // Loop count here also depends on how much poll_a_second() actually
     // delays and how often temp_measure() calls poll_a_second().
     if (time > RADIATOR_RESPONSE_TIME) {
-      //uint16_t temp_future = 0; // See struct answer above.
+      uint16_t temp_future = 0; // See struct answer above.
 
       /**
         This is the regulation algorithm. A tricky thing, because temperature
@@ -468,15 +467,15 @@ int main(void) {
         sufficient RAM to implement such a thing.
       */
       // Extrapolation. Take care of the sign.
-      answer.temp_future = (temp_c + PREDICTION_STEEPNESS *
-                            ((int16_t)temp_c - (int16_t)answer.temp_last));
+      temp_future = temp_c + PREDICTION_STEEPNESS *
+                    ((int16_t)temp_c - (int16_t)answer.temp_last);
 
       // Act according to the prediction.
-      if (answer.temp_future < (TARGET_TEMPERATURE - THERMISTOR_HYSTERESIS)) {
+      if (temp_future < (TARGET_TEMPERATURE - THERMISTOR_HYSTERESIS)) {
         motor_close();
         answer.motor_moved = '-';
       } else
-      if (answer.temp_future > (TARGET_TEMPERATURE + THERMISTOR_HYSTERESIS)) {
+      if (temp_future > (TARGET_TEMPERATURE + THERMISTOR_HYSTERESIS)) {
         motor_open();
         answer.motor_moved = '+';
       } else {
