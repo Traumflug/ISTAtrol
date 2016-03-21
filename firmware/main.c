@@ -148,12 +148,19 @@ static union {
 /**
   Our last temperature measurements.
 */
-static uint16_t temp_c = 0;
+static uint16_t temp_c = 0; // Reading used for controlling.
 #ifdef MULTISENSOR_BROKEN
 static uint16_t temp_v = 0;
 static uint16_t temp_r = 0;
 #endif
-static uint16_t temp_temp = 0;
+static uint16_t temp_temp = 0; // Reading directly from ADC.
+#if TARGET_TEMPERATURE < 7000
+  // We can expect thermistor readings to be always below 8192, so it always
+  // fits into 12 bits and we can always keep a multiplication by 8.
+  // Initialize to a reasonable value to avoid underflows on the first steps.
+  static uint16_t temp_temp_eight = TARGET_TEMPERATURE * 8L;
+#endif
+
 static uint8_t conversion_done = 0;
 
 #ifndef CAN_AFFORD_USB_COMMANDS
@@ -343,8 +350,19 @@ static void temp_measure(void) {
   // While ADC does its work, wait a second while polling USB.
   poll_a_second();
 
-  // Store measurement with a two-point moving average for denoising.
-  temp_c = (temp_temp + temp_c + 1) / 2;
+  // Store the new ADC reading with smoothing. Note that we do many ADC
+  // ADC readings between evaluations for the control algorithm, so the
+  // reading is well smoothed in between and response to temperature changes
+  // is as quick as without averaging.
+  #if TARGET_TEMPERATURE < 7000
+    // Use a moving average with 8 values. New readings count in at about 12%.
+    temp_temp_eight -= temp_c;
+    temp_temp_eight += temp_temp;
+    temp_c = (temp_temp_eight /*+ 4*/) / 8;  // '+ 4' for rounding
+  #else
+    // Use a two-point moving average, which allows readings up to 32767.
+    temp_c = (temp_temp + temp_c + 1) / 2;
+  #endif
 
 #ifdef MULTISENSOR_BROKEN
   /**
