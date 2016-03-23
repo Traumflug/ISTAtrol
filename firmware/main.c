@@ -40,14 +40,14 @@
 
   This is our main goal!
 
-  Unit is thermistor readout, which reacty the opposite way than a thermometer
-  display. Lower values mean higher temperature, higher values mean colder.
-  Best value is found during calibration.
+  Unit is thermistor readout, which reacts opposite to a thermometer display.
+  Lower values mean higher temperature, higher values mean colder. Best value
+  is found during calibration.
 
   Unit:  1
   Range: 500..32267
 */
-#define TARGET_TEMPERATURE 5700
+#define TARGET_TEMPERATURE 5800
 
 /** \def THERMISTOR_HYSTERESIS
 
@@ -62,7 +62,7 @@
   Unit:  1
   Range: 0..499
 */
-#define THERMISTOR_HYSTERESIS 30
+#define THERMISTOR_HYSTERESIS 50
 
 /** \def RADIATOR_RESPONSE_TIME
 
@@ -78,7 +78,7 @@
   Unit:  seconds (approximately)
   Range: 0..65535
 */
-#define RADIATOR_RESPONSE_TIME 100
+#define RADIATOR_RESPONSE_TIME 120
 
 /** \def PREDICTION_STEEPNESS
 
