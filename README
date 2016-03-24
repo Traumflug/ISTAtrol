@@ -3,6 +3,9 @@ ISTAtrol heating valve controller.
 
 Designed for DIY-ability.
 
+For documentation and pictures see http://reprap-diy.com/wiki/istatrol
+
+
 This controller controls the valve of a heating radiator which is equipped
 with a DC motor running at 3 volts. It comes with three temperature sensors:
 
@@ -21,12 +24,6 @@ external voltage source (5 to 12 volts).
 This controller was designed because these ISTA counters measure heating
 consumption based on the temperature of the radiator, only, which leaves much
 room for optimisation.
-
-For example, they don't count anything when the radiator is below 28 deg
-Celsius, which can be exploited to have some moderate heating for free. The
-controller also controls the temperature of the heating valve, to compensate
-for changing temperatures of the feed line, which usually results in uneven
-room heating and also higher than neccessary consumption measurements.
 
 
 Directory contents:
