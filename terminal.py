@@ -1,10 +1,22 @@
 #!/usr/bin/env python3
-
-# Name: terminal.py
-# Project: ISTAtrol
-# Author: Markus "Traumflug" Hitter, <mah@jump-ing.de>
-# Creation Date: 2016-03-16
-# License: GPLv3
+#
+# Communications terminal for the ISTAtrol heating valve controller.
+#
+# Copyright (C) 2016 Markus "Traumflug" Hitter <mah@jump-ing.de>
+#
+# This program is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the Free
+# Software Foundation, either version 3 of the License, or (at your option)
+# any later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# this program. If not, see <http://www.gnu.org/licenses/>.
+#
 #
 # This project uses libusb and pyusb bindings for interfacing the usb bus and
 # communicating with the ISTAtrol controller.
@@ -77,6 +89,11 @@ class ISTAtrolPort:
     self.count += 1
     self.lastC = readingC
 
+
+print("ISTAtrol communications terminal.")
+print("Copyright (C) 2016 Markus \"Traumflug\" Hitter <mah@jump-ing.de>.")
+print("This program is free software and comes with ABSOLUTELY NO WARRANTY;")
+print("for details see license.txt (GPLv3).")
 
 dev = ISTAtrolPort()
 dev.open()

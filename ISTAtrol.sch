@@ -5,7 +5,7 @@ ISTAtrol
 A controller for optimisation of heatings
 equipped with ISTA counters.
 
-(c) 2016 Traumflug
+(c) 2016 Markus "Traumflug" Hitter
 Creative Commons BY-NC-SA 3.0 Licence
 
 C 45200 35900 1 0 0 gnd-1.sym

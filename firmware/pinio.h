@@ -1,19 +1,6 @@
-/** \file
-  \brief I/O primitives.
-*/
+/** \file pinio.h
 
-#ifndef _PINIO_H
-#define _PINIO_H
-
-#include <avr/io.h>
-
-#ifndef MASK
-  /// MASKING- returns \f$2^PIN\f$
-  #define MASK(PIN) (1 << PIN)
-#endif
-
-
-/** Magic I/O routines, also known as "FastIO".
+  Magic I/O routines, also known as "FastIO".
 
   Now you can simply SET_OUTPUT(STEP); WRITE(STEP, 1); WRITE(STEP, 0);.
 
@@ -25,6 +12,35 @@
   It also make code fast, on AVR a pin can be turned on and off in just two
   clock cycles.
 */
+/*
+  Copyright (C) 2016 Markus "Traumflug" Hitter <mah@jump-ing.de>
+
+  This program is free software: you can redistribute it and/or modify it
+  under the terms of the GNU General Public License as published by the Free
+  Software Foundation, either version 3 of the License, or (at your option)
+  any later version.
+
+  This program is distributed in the hope that it will be useful, but WITHOUT
+  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+  FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+  more details.
+
+  You should have received a copy of the GNU General Public License along with
+  this program. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#ifndef _PINIO_H
+#define _PINIO_H
+
+#include <avr/io.h>
+
+
+#ifndef MASK
+  /// MASKING- returns \f$2^PIN\f$
+  #define MASK(PIN) (1 << PIN)
+#endif
+
+
 /// Read a pin.
 #define _READ(IO)        (IO ## _RPORT & MASK(IO ## _PIN))
 /// Write to a pin.
