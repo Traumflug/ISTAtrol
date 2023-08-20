@@ -1,3 +1,12 @@
+Archiving hint: In late summer 2023, Github started to enforce 2FA (Two Factor
+                Authentication), so I had to archive it before losing control
+                over it.  The heating radiator valve I operate with this 
+                electronics and firmware works just as intended for 7 years now,
+                so no inducement to change or further develop it.  See also
+                https://github.com/Traumflug/ISTAtrol/issues/1
+
+                Markus "Traumflug" Hitter, August 2023
+
 
 ISTAtrol heating valve controller.
 
